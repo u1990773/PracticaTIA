@@ -429,6 +429,7 @@ MonoBehaviour:
   notasRecogidas: 0
   contadorNotas: {fileID: 532622218}
   texto_mision: {fileID: 275662240}
+  vrMode: 0
   maxHealth: 100
   currentHealth: 0
   movementSpeed: 5
@@ -9632,7 +9633,7 @@ PrefabInstance:
     - target: {fileID: 645708956958198976, guid: 657c6dca3eed18040bc445610025500f,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -7.212424
+      value: -21.23
       objectReference: {fileID: 0}
     - target: {fileID: 645708956958198976, guid: 657c6dca3eed18040bc445610025500f,
         type: 3}
@@ -9642,7 +9643,7 @@ PrefabInstance:
     - target: {fileID: 645708956958198976, guid: 657c6dca3eed18040bc445610025500f,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.6699293
+      value: -7.21
       objectReference: {fileID: 0}
     - target: {fileID: 645708956958198976, guid: 657c6dca3eed18040bc445610025500f,
         type: 3}
