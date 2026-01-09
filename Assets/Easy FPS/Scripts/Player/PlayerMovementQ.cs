@@ -8,6 +8,8 @@ public class PlayerMovementQ : MonoBehaviour
     public int notasRecogidas = 0;
     public TextMeshProUGUI contadorNotas;
     public TextMeshProUGUI texto_mision;
+    public bool vrMode = false;
+
 
 
     [Header("Player Health & Damage")]
@@ -45,58 +47,62 @@ public class PlayerMovementQ : MonoBehaviour
 
     void Update()
     {
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
-
-        if (isGrounded && velocity.y < 0)
+        if (!vrMode)
         {
-            velocity.y = -2f;
-        }
-        HandleMovement();
-        HandleGravity();
+            
+        
+            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
-        //Handle Footsteps
-        if (isGrounded && controller.velocity.magnitude > 0.1f && Time.time >= nextFootstepTime)
-        {
-            PlayFootstepSound();
-            nextFootstepTime = Time.time + footstepInterval;
-        }
-
-        //Handle Jump
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-
-            velocity.y = Mathf.Sqrt(jumpForce * -2 * gravity);
-        }
-
-        controller.Move(velocity * Time.deltaTime);
-
-        if (contadorNotas != null)
-        {
-            contadorNotas.text = "Notes: " + notasRecogidas;
-        }
-
-        if (notasRecogidas == 5)
-        {
-            texto_mision.text = "You already have the notes. Escape through the principal door!";
-        }
-
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            isImmortal = !isImmortal; 
-            if (isImmortal)
+            if (isGrounded && velocity.y < 0)
             {
-                maxHealth = 9999;
-                currentHealth = maxHealth;
-                Debug.Log("CHEAT ACTIVATED: Immortality ON");
+                velocity.y = -2f;
             }
-            else
-            {
-                maxHealth = 100;
-                currentHealth = maxHealth;
-                Debug.Log("CHEAT DEACTIVATED: Immortality OFF");
-            }
-        }
+            HandleMovement();
+            HandleGravity();
 
+            //Handle Footsteps
+            if (isGrounded && controller.velocity.magnitude > 0.1f && Time.time >= nextFootstepTime)
+            {
+                PlayFootstepSound();
+                nextFootstepTime = Time.time + footstepInterval;
+            }
+
+            //Handle Jump
+            if (Input.GetButtonDown("Jump") && isGrounded)
+            {
+
+                velocity.y = Mathf.Sqrt(jumpForce * -2 * gravity);
+            }
+
+            controller.Move(velocity * Time.deltaTime);
+        }
+            if (contadorNotas != null)
+            {
+                contadorNotas.text = "Notes: " + notasRecogidas;
+            }
+
+            if (notasRecogidas == 5)
+            {
+                texto_mision.text = "You already have the notes. Escape through the principal door!";
+            }
+
+            if (Input.GetKeyDown(KeyCode.P))
+            {
+                isImmortal = !isImmortal; 
+                if (isImmortal)
+                {
+                    maxHealth = 9999;
+                    currentHealth = maxHealth;
+                    Debug.Log("CHEAT ACTIVATED: Immortality ON");
+                }
+                else
+                {
+                    maxHealth = 100;
+                    currentHealth = maxHealth;
+                    Debug.Log("CHEAT DEACTIVATED: Immortality OFF");
+                }
+            }
+        
     }
 
     void HandleMovement()
@@ -146,7 +152,12 @@ public class PlayerMovementQ : MonoBehaviour
      void LoadGameOverScene()
     {
         SceneManager.LoadScene("GameOver"); 
-        
+        var legacyPlayer = GameObject.FindWithTag("Player");
+        if (legacyPlayer != null)
+        {
+            var pm = legacyPlayer.GetComponent<PlayerMovementQ>();
+            if (pm != null) pm.vrMode = true;
+        }   
     }
     private void Die(){
 
