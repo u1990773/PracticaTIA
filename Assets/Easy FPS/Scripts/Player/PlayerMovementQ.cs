@@ -32,12 +32,12 @@ public class PlayerMovementQ : MonoBehaviour
     private Vector3 velocity;
 
     [Header("Foot Steps")]
-        public AudioSource leftFootAudioSource;
-        public AudioSource rightFootAudioSource;
-        public AudioClip[] footstepSounds;
-        public float footstepInterval;
-        private float nextFootstepTime;
-        private bool isLeftFootStep = true;
+    public AudioSource leftFootAudioSource;
+    public AudioSource rightFootAudioSource;
+    public AudioClip[] footstepSounds;
+    public float footstepInterval;
+    private float nextFootstepTime;
+    private bool isLeftFootStep = true;
 
     void Start() //sart Cabron
     {
@@ -49,8 +49,8 @@ public class PlayerMovementQ : MonoBehaviour
     {
         if (!vrMode)
         {
-            
-        
+
+
             isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
 
             if (isGrounded && velocity.y < 0)
@@ -76,58 +76,62 @@ public class PlayerMovementQ : MonoBehaviour
 
             controller.Move(velocity * Time.deltaTime);
         }
-            if (contadorNotas != null)
-            {
-                contadorNotas.text = "Notes: " + notasRecogidas;
-            }
+        if (contadorNotas != null)
+        {
+            contadorNotas.text = "Notes: " + notasRecogidas;
+        }
 
-            if (notasRecogidas == 5)
-            {
-                texto_mision.text = "You already have the notes. Escape through the principal door!";
-            }
+        if (notasRecogidas == 5)
+        {
+            texto_mision.text = "You already have the notes. Escape through the principal door!";
+        }
 
-            if (Input.GetKeyDown(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            isImmortal = !isImmortal;
+            if (isImmortal)
             {
-                isImmortal = !isImmortal; 
-                if (isImmortal)
-                {
-                    maxHealth = 9999;
-                    currentHealth = maxHealth;
-                    Debug.Log("CHEAT ACTIVATED: Immortality ON");
-                }
-                else
-                {
-                    maxHealth = 100;
-                    currentHealth = maxHealth;
-                    Debug.Log("CHEAT DEACTIVATED: Immortality OFF");
-                }
+                maxHealth = 9999;
+                currentHealth = maxHealth;
+                Debug.Log("CHEAT ACTIVATED: Immortality ON");
             }
-        
+            else
+            {
+                maxHealth = 100;
+                currentHealth = maxHealth;
+                Debug.Log("CHEAT DEACTIVATED: Immortality OFF");
+            }
+        }
+
     }
 
     void HandleMovement()
     {
         float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput =Input.GetAxis("Vertical");
+        float verticalInput = Input.GetAxis("Vertical");
 
         Vector3 movement = transform.right * horizontalInput + transform.forward * verticalInput;
-        movement.y =0;
+        movement.y = 0;
 
-        controller.Move(movement*movementSpeed * Time.deltaTime);
+        controller.Move(movement * movementSpeed * Time.deltaTime);
     }
 
 
-    void HandleGravity(){
+    void HandleGravity()
+    {
         velocity.y += gravity * Time.deltaTime;
     }
 
-    void PlayFootstepSound(){
+    void PlayFootstepSound()
+    {
         AudioClip footstepClip = footstepSounds[Random.Range(0, footstepSounds.Length)];
 
-        if(isLeftFootStep){
+        if (isLeftFootStep)
+        {
             leftFootAudioSource.PlayOneShot(footstepClip);
         }
-        else{
+        else
+        {
             rightFootAudioSource.PlayOneShot(footstepClip);
         }
 
@@ -136,30 +140,31 @@ public class PlayerMovementQ : MonoBehaviour
 
     public void TakeDamage(int damageAmount)
     {
-        if (!isImmortal) 
-    {
-        currentHealth -= damageAmount;
-
-        if(currentHealth <= 0)
+        if (!isImmortal)
         {
-            currentHealth = 0;
-            Die();
+            currentHealth -= damageAmount;
+
+            if (currentHealth <= 0)
+            {
+                currentHealth = 0;
+                Die();
+            }
         }
-    }
 
     }
 
-     void LoadGameOverScene()
+    void LoadGameOverScene()
     {
-        SceneManager.LoadScene("GameOver"); 
+        SceneManager.LoadScene("GameOver");
         var legacyPlayer = GameObject.FindWithTag("Player");
         if (legacyPlayer != null)
         {
             var pm = legacyPlayer.GetComponent<PlayerMovementQ>();
             if (pm != null) pm.vrMode = true;
-        }   
+        }
     }
-    private void Die(){
+    private void Die()
+    {
 
         LoadGameOverScene();
         Debug.Log("Player has died");

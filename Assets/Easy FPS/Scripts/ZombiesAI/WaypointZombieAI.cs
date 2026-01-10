@@ -7,7 +7,7 @@ public class WaypointZombieAI : MonoBehaviour
 {
     public NavMeshAgent navAgent;
 
-    public enum ZombieState {Walk, Chase, Attack, Dead}
+    public enum ZombieState { Walk, Chase, Attack, Dead }
 
     public Animator animator;
 
@@ -17,9 +17,9 @@ public class WaypointZombieAI : MonoBehaviour
 
     public float chaseDistance = 10f;
 
-    public float attackDistance= 2f;
+    public float attackDistance = 2f;
 
-    public float attackCooldown= 2f;
+    public float attackCooldown = 2f;
 
     public float attackDelay = 1.5f;
 
@@ -38,10 +38,10 @@ public class WaypointZombieAI : MonoBehaviour
 
     private GameObject instantiatedObject;
 
-     void Start()
+    void Start()
     {
         GameObject playerObject = GameObject.FindWithTag("Player");
-        if(playerObject != null)
+        if (playerObject != null)
         {
             player = playerObject.transform;
         }
@@ -61,24 +61,24 @@ public class WaypointZombieAI : MonoBehaviour
         switch (currentState)
         {
             case ZombieState.Walk:
-                if(!isMoving || navAgent.remainingDistance < 0.1f)
+                if (!isMoving || navAgent.remainingDistance < 0.1f)
                 {
                     Walk();
                 }
 
-                if(IsPlayerInRange(chaseDistance))
+                if (IsPlayerInRange(chaseDistance))
                     currentState = ZombieState.Chase;
-                    break;
-            
+                break;
+
             case ZombieState.Chase:
                 ChasePlayer();
-                if(IsPlayerInRange(attackDistance))
+                if (IsPlayerInRange(attackDistance))
                     currentState = ZombieState.Attack;
                 break;
-            
+
             case ZombieState.Attack:
                 AttackPlayer();
-                if(!IsPlayerInRange(attackDistance))
+                if (!IsPlayerInRange(attackDistance))
                     currentState = ZombieState.Chase;
                 break;
 
@@ -89,7 +89,7 @@ public class WaypointZombieAI : MonoBehaviour
                 navAgent.enabled = false;
                 capsuleCollider.enabled = false;
                 enabled = false;
-                GameManager.instance.currentScore +=1;
+                GameManager.instance.currentScore += 1;
                 Debug.Log("Dead");
                 break;
         }
@@ -125,23 +125,23 @@ public class WaypointZombieAI : MonoBehaviour
         animator.SetBool("IsChasing", true);
         animator.SetBool("IsAttacking", false);
         navAgent.SetDestination(player.position);
-        
+
     }
 
     private void AttackPlayer()
     {
-         //animations
-         animator.SetBool("IsChasing", false);
+        //animations
+        animator.SetBool("IsChasing", false);
         animator.SetBool("IsAttacking", true);
-         navAgent.SetDestination(transform.position);
-        if(!isAttacking && Time.time - lastAttackTime >= attackCooldown)
+        navAgent.SetDestination(transform.position);
+        if (!isAttacking && Time.time - lastAttackTime >= attackCooldown)
         {
             StartCoroutine(AttackWithDelay());
             StartCoroutine(ActiveBloodScreenEffect());
             lastAttackTime = Time.time;
 
             PlayerMovementQ playerMovement = player.GetComponent<PlayerMovementQ>();
-            if(playerMovement !=null)
+            if (playerMovement != null)
             {
                 playerMovement.TakeDamage(damage);
             }
@@ -149,14 +149,16 @@ public class WaypointZombieAI : MonoBehaviour
 
     }
 
-    private IEnumerator AttackWithDelay(){
+    private IEnumerator AttackWithDelay()
+    {
         isAttacking = true;
         yield return new WaitForSeconds(attackDelay);
         isAttacking = false;
     }
 
 
-     private IEnumerator ActiveBloodScreenEffect(){
+    private IEnumerator ActiveBloodScreenEffect()
+    {
         InstantiateObject();
         yield return new WaitForSeconds(attackDelay);
         DeleteObject();
@@ -164,12 +166,12 @@ public class WaypointZombieAI : MonoBehaviour
 
     public void TakeDamage(int damageAmount)
     {
-        if(currentState == ZombieState.Dead)
+        if (currentState == ZombieState.Dead)
             return;
-        
-        health -=damageAmount;
 
-        if(health <= 0)
+        health -= damageAmount;
+
+        if (health <= 0)
         {
             health = 0;
             Die();
@@ -187,7 +189,7 @@ public class WaypointZombieAI : MonoBehaviour
 
     void DeleteObject()
     {
-        if(instantiatedObject != null)
+        if (instantiatedObject != null)
         {
             Destroy(instantiatedObject);
 

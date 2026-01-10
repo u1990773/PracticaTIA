@@ -8,7 +8,7 @@ public class ZombieAI : MonoBehaviour
 {
     public NavMeshAgent navAgent;
 
-    public enum ZombieState {Idle, Chase, Attack, Dead}
+    public enum ZombieState { Idle, Chase, Attack, Dead }
 
     public Animator animator;
 
@@ -18,9 +18,9 @@ public class ZombieAI : MonoBehaviour
 
     public float chaseDistance = 10f;
 
-    public float attackDistance= 2f;
+    public float attackDistance = 2f;
 
-    public float attackCooldown= 2f;
+    public float attackCooldown = 2f;
 
     public float attackDelay = 1.5f;
 
@@ -41,8 +41,8 @@ public class ZombieAI : MonoBehaviour
 
     void Start()
     {
-         GameObject playerObject = GameObject.FindWithTag("Player");
-        if(playerObject != null)
+        GameObject playerObject = GameObject.FindWithTag("Player");
+        if (playerObject != null)
         {
             player = playerObject.transform;
         }
@@ -63,20 +63,20 @@ public class ZombieAI : MonoBehaviour
             case ZombieState.Idle:
                 animator.SetBool("IsWalking", false);
                 animator.SetBool("IsAttacking", false);
-                if(Vector3.Distance(transform.position, player.position) <= chaseDistance) 
+                if (Vector3.Distance(transform.position, player.position) <= chaseDistance)
                     currentState = ZombieState.Chase;
                 break;
             case ZombieState.Chase:
                 animator.SetBool("IsWalking", true);
                 animator.SetBool("IsAttacking", false);
                 navAgent.SetDestination(player.position);
-                if(Vector3.Distance(transform.position, player.position) <= attackDistance)
+                if (Vector3.Distance(transform.position, player.position) <= attackDistance)
                     currentState = ZombieState.Attack;
                 break;
             case ZombieState.Attack:
                 animator.SetBool("IsAttacking", true);
                 navAgent.SetDestination(transform.position);
-                if(!isAttacking && Time.time - lastAttackTime >= attackCooldown)
+                if (!isAttacking && Time.time - lastAttackTime >= attackCooldown)
                 {
 
                     StartCoroutine(AttackWithDelay());
@@ -84,8 +84,8 @@ public class ZombieAI : MonoBehaviour
                     StartCoroutine(ActiveBloodScreenEffect());
 
                 }
-                
-                if(Vector3.Distance(transform.position, player.position) > attackDistance)
+
+                if (Vector3.Distance(transform.position, player.position) > attackDistance)
                     currentState = ZombieState.Chase;
                 break;
             case ZombieState.Dead:
@@ -95,19 +95,19 @@ public class ZombieAI : MonoBehaviour
                 navAgent.enabled = false;
                 capsuleCollider.enabled = false;
                 enabled = false;
-               GameManager.instance.currentScore +=1;
+                GameManager.instance.currentScore += 1;
                 Debug.Log("Dead");
                 break;
 
         }
     }
 
-   private IEnumerator AttackWithDelay()
+    private IEnumerator AttackWithDelay()
     {
         isAttacking = true;
-       
+
         PlayerMovementQ playerMovement = player.GetComponent<PlayerMovementQ>();
-        if(playerMovement !=null)
+        if (playerMovement != null)
         {
             playerMovement.TakeDamage(damage);
         }
@@ -117,7 +117,8 @@ public class ZombieAI : MonoBehaviour
         lastAttackTime = Time.time;
 
     }
-    private IEnumerator ActiveBloodScreenEffect(){
+    private IEnumerator ActiveBloodScreenEffect()
+    {
         InstantiateObject();
         yield return new WaitForSeconds(attackDelay);
         DeleteObject();
@@ -125,12 +126,12 @@ public class ZombieAI : MonoBehaviour
 
     public void TakeDamage(int damageAmount)
     {
-        if(currentState == ZombieState.Dead)
+        if (currentState == ZombieState.Dead)
             return;
-        
-        health -=damageAmount;
 
-        if(health <= 0)
+        health -= damageAmount;
+
+        if (health <= 0)
         {
             health = 0;
             Die();
@@ -148,7 +149,7 @@ public class ZombieAI : MonoBehaviour
 
     void DeleteObject()
     {
-        if(instantiatedObject != null)
+        if (instantiatedObject != null)
         {
             Destroy(instantiatedObject);
 
