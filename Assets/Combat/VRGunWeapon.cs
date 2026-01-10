@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Arma VR grabbable con disparo, recarga, munición y feedback.
 /// Compatible con sistema legacy de daño (busca zombies, etc).
+/// VERSIÓN ARREGLADA: Funciona con Device Simulator (click/teclado)
 /// </summary>
 [RequireComponent(typeof(XRGrabInteractable))]
 public class VRGunWeapon : MonoBehaviour
@@ -42,6 +43,7 @@ public class VRGunWeapon : MonoBehaviour
     private ActionBasedController currentController;
     private float lastFireTime;
     private bool isReloading = false;
+    private bool isGrabbed = false; // NUEVO: flag para saber si está agarrada
 
     private void Awake()
     {
@@ -86,21 +88,46 @@ public class VRGunWeapon : MonoBehaviour
 
     private void Update()
     {
-        // Solo procesar input si el arma está agarrada
-        if (currentController == null || isReloading) return;
+        // IMPORTANTE: Solo procesar input si el arma está agarrada
+        if (!isGrabbed || isReloading) return;
 
-        // Disparar
+        bool shootPressed = false;
+        bool reloadPressed = false;
+
+        // Input VR (Trigger) - si hay controller y action configurada
         if (fireAction.action != null && fireAction.action.IsPressed())
         {
-            if (Time.time - lastFireTime >= fireRate)
-            {
-                Fire();
-                lastFireTime = Time.time;
-            }
+            shootPressed = true;
+        }
+
+        if (reloadAction.action != null && reloadAction.action.WasPressedThisFrame())
+        {
+            reloadPressed = true;
+        }
+
+        // FALLBACK EDITOR: Click izquierdo = disparar, R = recargar
+        // Solo si el arma ESTÁ agarrada
+#if UNITY_EDITOR
+        if (Input.GetMouseButton(0))
+        {
+            shootPressed = true;
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            reloadPressed = true;
+        }
+#endif
+
+        // Disparar con fire rate
+        if (shootPressed && Time.time - lastFireTime >= fireRate)
+        {
+            Fire();
+            lastFireTime = Time.time;
         }
 
         // Recargar
-        if (reloadAction.action != null && reloadAction.action.WasPressedThisFrame())
+        if (reloadPressed)
         {
             StartReload();
         }
@@ -110,6 +137,8 @@ public class VRGunWeapon : MonoBehaviour
 
     private void OnGrabbed(SelectEnterEventArgs args)
     {
+        isGrabbed = true; // CRÍTICO: Marcar como agarrada
+
         // Obtener el controlador que agarró el arma
         if (args.interactorObject is XRBaseControllerInteractor controllerInteractor)
         {
@@ -122,13 +151,14 @@ public class VRGunWeapon : MonoBehaviour
             VRHapticsManager.Instance.SendLightTap(currentController);
         }
 
-        Debug.Log("[VRGunWeapon] Arma agarrada.");
+        Debug.Log("[VRGunWeapon] Arma agarrada - Listo para disparar");
     }
 
     private void OnReleased(SelectExitEventArgs args)
     {
+        isGrabbed = false; // CRÍTICO: Marcar como soltada
         currentController = null;
-        Debug.Log("[VRGunWeapon] Arma soltada.");
+        Debug.Log("[VRGunWeapon] Arma soltada");
     }
 
     #endregion
@@ -140,6 +170,7 @@ public class VRGunWeapon : MonoBehaviour
         if (currentAmmo <= 0)
         {
             PlayEmptySound();
+            Debug.Log("[VRGunWeapon] ¡Sin munición! Recarga con R");
             return;
         }
 
@@ -178,7 +209,7 @@ public class VRGunWeapon : MonoBehaviour
             ProcessHit(hit);
         }
 
-        Debug.Log($"[VRGunWeapon] Disparo! Munición: {currentAmmo}/{maxAmmo}");
+        Debug.Log($"[VRGunWeapon] 💥 Disparo! Munición: {currentAmmo}/{maxAmmo}");
     }
 
     private void ProcessHit(RaycastHit hit)
@@ -196,7 +227,7 @@ public class VRGunWeapon : MonoBehaviour
         if (damageable != null)
         {
             damageable.TakeDamage(damage);
-            Debug.Log($"[VRGunWeapon] Daño a {hit.collider.name}: {damage}");
+            Debug.Log($"[VRGunWeapon] 🎯 Daño a {hit.collider.name}: {damage}");
             return;
         }
 
@@ -204,6 +235,8 @@ public class VRGunWeapon : MonoBehaviour
         var target = hit.collider.gameObject;
         target.SendMessage("RecibirDaño", damage, SendMessageOptions.DontRequireReceiver);
         target.SendMessage("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);
+
+        Debug.Log($"[VRGunWeapon] 🎯 Impacto en: {hit.collider.name}");
     }
 
     private System.Collections.IEnumerator ShowBulletTrail(Vector3 start, Vector3 end)
@@ -225,9 +258,15 @@ public class VRGunWeapon : MonoBehaviour
 
     private void StartReload()
     {
-        if (isReloading || currentAmmo == maxAmmo)
+        if (isReloading)
         {
-            Debug.Log("[VRGunWeapon] No se puede recargar ahora.");
+            Debug.Log("[VRGunWeapon] Ya estoy recargando...");
+            return;
+        }
+
+        if (currentAmmo == maxAmmo)
+        {
+            Debug.Log("[VRGunWeapon] Cargador lleno, no necesitas recargar");
             return;
         }
 
@@ -238,7 +277,7 @@ public class VRGunWeapon : MonoBehaviour
     {
         isReloading = true;
 
-        Debug.Log("[VRGunWeapon] Recargando...");
+        Debug.Log($"[VRGunWeapon] 🔄 Recargando... ({reloadTime}s)");
 
         // Audio
         if (audioSource != null && reloadSound != null)
@@ -261,7 +300,7 @@ public class VRGunWeapon : MonoBehaviour
             VRHapticsManager.Instance.SendMediumBump(currentController);
         }
 
-        Debug.Log("[VRGunWeapon] Recarga completada!");
+        Debug.Log($"[VRGunWeapon] ✅ Recarga completada! Munición: {currentAmmo}/{maxAmmo}");
     }
 
     #endregion
@@ -281,6 +320,7 @@ public class VRGunWeapon : MonoBehaviour
     public int GetCurrentAmmo() => currentAmmo;
     public int GetMaxAmmo() => maxAmmo;
     public bool IsReloading() => isReloading;
+    public bool IsGrabbed() => isGrabbed; // NUEVO: para que HUD sepa si está agarrada
     public void AddAmmo(int amount) => currentAmmo = Mathf.Min(currentAmmo + amount, maxAmmo);
 
     #endregion
