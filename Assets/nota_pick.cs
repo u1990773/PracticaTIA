@@ -1,10 +1,7 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.XR.Interaction.Toolkit;
 
-/// <summary>
-/// Script legacy de Nota, ahora compatible con VR.
-/// Funciona tanto en modo legacy (tecla E) como en VR (tocar).
-/// </summary>
 public class Nota : MonoBehaviour
 {
     [Header("Legacy Settings")]
@@ -12,145 +9,129 @@ public class Nota : MonoBehaviour
     public TextMeshProUGUI textoInteractuar;
 
     [Header("VR Settings")]
-    [SerializeField] private bool vrMode = false; // Auto-detecta si está en VR
-    [SerializeField] private bool autoCollectOnTouch = true; // En VR, recoger al tocar
+    [SerializeField] private bool vrMode = false;
 
     private bool cercaDelJugador = false;
     private PlayerMovementQ jugador;
     private bool alreadyCollected = false;
 
+    private XRGrabInteractable grabInteractable;
+
     void Start()
     {
         jugador = FindObjectOfType<PlayerMovementQ>();
 
-        // Auto-detectar VR mode
+        // Detectar VR
         if (jugador != null && jugador.vrMode)
         {
             vrMode = true;
 
-            // Desactivar texto de interacción en VR
             if (textoInteractuar != null)
-            {
                 textoInteractuar.gameObject.SetActive(false);
-            }
+
+            SetupVRGrab();
         }
     }
 
+    private void SetupVRGrab()
+    {
+        XRGrabInteractable grab = GetComponent<XRGrabInteractable>();
+        if (grab == null)
+        {
+            grab = gameObject.AddComponent<XRGrabInteractable>();
+            grab.throwOnDetach = false;
+        }
+
+        // ASIGNAR INTERACTION MANAGER AUTOMÁTICAMENTE
+        XRInteractionManager manager = FindObjectOfType<XRInteractionManager>();
+        if (manager != null)
+        {
+            grab.interactionManager = manager;
+        }
+        else
+        {
+            Debug.LogError("[Nota] No se encontró XRInteractionManager en la escena");
+        }
+
+        // Asignar collider
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            grab.colliders.Clear();
+            grab.colliders.Add(col);
+        }
+
+        grab.selectEntered.AddListener(OnGrabbed);
+    }
+
+
     private void Update()
     {
-        // Solo procesar tecla E si NO está en VR
+        // Legacy: recoger con E
         if (!vrMode && cercaDelJugador && Input.GetKeyDown(KeyCode.E))
         {
             RecogerNota();
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnGrabbed(SelectEnterEventArgs args)
     {
         if (alreadyCollected) return;
+        RecogerNota();
+    }
+
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (alreadyCollected || vrMode) return;
 
         if (other.CompareTag("Player"))
         {
             cercaDelJugador = true;
 
-            // Legacy mode: mostrar texto "Press E"
-            if (!vrMode && textoInteractuar != null)
-            {
+            if (textoInteractuar != null)
                 textoInteractuar.enabled = true;
-            }
-
-            // VR mode: recoger automáticamente al tocar
-            if (vrMode && autoCollectOnTouch)
-            {
-                RecogerNota();
-            }
-        }
-
-        // En VR, también puede ser el XR Origin/controllers
-        if (vrMode && IsVRPlayer(other))
-        {
-            if (autoCollectOnTouch)
-            {
-                RecogerNota();
-            }
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
+        if (vrMode) return;
+
         if (other.CompareTag("Player"))
         {
             cercaDelJugador = false;
 
-            if (!vrMode && textoInteractuar != null)
-            {
+            if (textoInteractuar != null)
                 textoInteractuar.enabled = false;
-            }
         }
     }
 
-    /// <summary>
-    /// Método para recoger la nota.
-    /// Compatible con VR y legacy.
-    /// </summary>
     public void RecogerNota()
     {
         if (alreadyCollected) return;
         alreadyCollected = true;
 
-        Debug.Log($"[Nota] Recogida: {mensaje.Substring(0, Mathf.Min(20, mensaje.Length))}...");
+        Debug.Log($"[Nota] Recogida: {mensaje}");
 
-        // Incrementar contador legacy
+        // Sumar al contador legacy
         if (jugador != null)
         {
             jugador.notasRecogidas++;
         }
 
-        // Notificar al Game Manager (VR)
+        // Notificar al Game Manager VR
         if (VRGameManager.Instance != null)
         {
             VRGameManager.Instance.OnNoteCollected();
         }
 
-        // Haptic feedback en VR
+        // Haptics VR
         if (vrMode && VRHapticsManager.Instance != null)
         {
             VRHapticsManager.Instance.SendMediumBumpBoth();
         }
 
-        // Destruir nota
         Destroy(gameObject);
-    }
-
-    /// <summary>
-    /// Verifica si el collider es parte del sistema VR.
-    /// </summary>
-    private bool IsVRPlayer(Collider other)
-    {
-        string name = other.name.ToLower();
-
-        // Por nombre
-        if (name.Contains("origin") || name.Contains("controller") ||
-            name.Contains("hand") || name.Contains("camera"))
-            return true;
-
-        // Por componente
-        if (other.GetComponentInParent<Unity.XR.CoreUtils.XROrigin>() != null)
-            return true;
-
-        return false;
-    }
-
-    /// <summary>
-    /// Fuerza el modo VR (llamado por VRNotesSetup si se usa).
-    /// </summary>
-    public void SetVRMode(bool enable)
-    {
-        vrMode = enable;
-
-        if (vrMode && textoInteractuar != null)
-        {
-            textoInteractuar.gameObject.SetActive(false);
-        }
     }
 }
