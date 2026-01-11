@@ -209,7 +209,7 @@ public class VRGunWeapon : MonoBehaviour
             ProcessHit(hit);
         }
 
-        Debug.Log($"[VRGunWeapon] 💥 Disparo! Munición: {currentAmmo}/{maxAmmo}");
+        Debug.Log($"[VRGunWeapon] Disparo! Munición: {currentAmmo}/{maxAmmo}");
     }
 
     private void ProcessHit(RaycastHit hit)
@@ -227,7 +227,7 @@ public class VRGunWeapon : MonoBehaviour
         if (damageable != null)
         {
             damageable.TakeDamage(damage);
-            Debug.Log($"[VRGunWeapon] 🎯 Daño a {hit.collider.name}: {damage}");
+            Debug.Log($"[VRGunWeapon] Daño a {hit.collider.name}: {damage}");
             return;
         }
 
@@ -236,7 +236,7 @@ public class VRGunWeapon : MonoBehaviour
         target.SendMessage("RecibirDaño", damage, SendMessageOptions.DontRequireReceiver);
         target.SendMessage("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);
 
-        Debug.Log($"[VRGunWeapon] 🎯 Impacto en: {hit.collider.name}");
+        Debug.Log($"[VRGunWeapon] Impacto en: {hit.collider.name}");
     }
 
     private System.Collections.IEnumerator ShowBulletTrail(Vector3 start, Vector3 end)
@@ -277,7 +277,7 @@ public class VRGunWeapon : MonoBehaviour
     {
         isReloading = true;
 
-        Debug.Log($"[VRGunWeapon] 🔄 Recargando... ({reloadTime}s)");
+        Debug.Log($"[VRGunWeapon] Recargando... ({reloadTime}s)");
 
         // Audio
         if (audioSource != null && reloadSound != null)
@@ -300,7 +300,7 @@ public class VRGunWeapon : MonoBehaviour
             VRHapticsManager.Instance.SendMediumBump(currentController);
         }
 
-        Debug.Log($"[VRGunWeapon] ✅ Recarga completada! Munición: {currentAmmo}/{maxAmmo}");
+        Debug.Log($"[VRGunWeapon] Recarga completada! Munición: {currentAmmo}/{maxAmmo}");
     }
 
     #endregion

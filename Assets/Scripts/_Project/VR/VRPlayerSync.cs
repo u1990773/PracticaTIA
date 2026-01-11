@@ -7,14 +7,14 @@ using Unity.XR.CoreUtils;
 /// </summary>
 public class VRPlayerSync : MonoBehaviour
 {
-    [Header("⚠️ NOTA: Este script es OPCIONAL")]
+    [Header("NOTA: Este script es OPCIONAL")]
     [Tooltip("Si VRBootstrapLoader hace el Player hijo del XR Origin, este script NO es necesario.")]
     [SerializeField] private bool enableSync = false; // ⭐ Desactivado por defecto
 
     [Header("References (si enableSync = true)")]
     public XROrigin xrOrigin;
     public Transform legacyPlayer;
-    
+
     [Header("Settings")]
     public bool lockY = true;
     public bool useCharacterController = false; // ⭐ Desactivado porque ya no hay CC en legacy player
@@ -25,7 +25,7 @@ public class VRPlayerSync : MonoBehaviour
     {
         if (!enableSync)
         {
-            Debug.Log("[VRPlayerSync] ⚠️ Sync desactivado. El Player legacy ya es hijo del XR Origin.");
+            Debug.Log("[VRPlayerSync] Sync desactivado. El Player legacy ya es hijo del XR Origin.");
             enabled = false;
             return;
         }
@@ -41,7 +41,7 @@ public class VRPlayerSync : MonoBehaviour
         if (legacyPlayer != null && useCharacterController)
             legacyCC = legacyPlayer.GetComponent<CharacterController>();
 
-        Debug.Log("[VRPlayerSync] ⚠️ Sync activado manualmente. Esto puede causar conflictos.");
+        Debug.Log("[VRPlayerSync] Sync activado manualmente. Esto puede causar conflictos.");
     }
 
     void LateUpdate()
@@ -65,7 +65,7 @@ public class VRPlayerSync : MonoBehaviour
         // ⭐ IMPORTANTE: Si el Player es hijo del XR Origin, este código no debería ejecutarse
         if (legacyPlayer.parent == xrOrigin.transform)
         {
-            Debug.LogWarning("[VRPlayerSync] ⚠️ Player legacy es hijo de XR Origin. Desactiva este script.");
+            Debug.LogWarning("[VRPlayerSync] Player legacy es hijo de XR Origin. Desactiva este script.");
             enabled = false;
             return;
         }

@@ -33,7 +33,7 @@ public class VRMovementFix : MonoBehaviour
     [SerializeField] private float minMoveDistance = 0.001f;
     [SerializeField] private float skinWidth = 0.08f;
     [SerializeField] private float stepOffset = 0.3f;
-    
+
     [Header("Anti-Float Settings")]
     [SerializeField] private float maxFallSpeed = -53f; // Velocidad máxima de caída
     [SerializeField] private float groundedThreshold = 0.1f; // Threshold para considerar "grounded"
@@ -55,7 +55,7 @@ public class VRMovementFix : MonoBehaviour
         if (characterController == null && autoAddCharacterController)
         {
             characterController = gameObject.AddComponent<CharacterController>();
-            Debug.Log("[VRMovementFix] ✅ Character Controller añadido automáticamente.");
+            Debug.Log("[VRMovementFix] Character Controller añadido automáticamente.");
         }
 
         if (characterController != null)
@@ -64,7 +64,7 @@ public class VRMovementFix : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[VRMovementFix] ❌ No hay Character Controller. El movimiento no funcionará correctamente.");
+            Debug.LogError("[VRMovementFix] No hay Character Controller. El movimiento no funcionará correctamente.");
             enabled = false;
         }
     }
@@ -78,7 +78,7 @@ public class VRMovementFix : MonoBehaviour
         characterController.minMoveDistance = minMoveDistance;
         characterController.stepOffset = stepOffset;
 
-        Debug.Log("[VRMovementFix] ✅ Character Controller configurado correctamente.");
+        Debug.Log("[VRMovementFix] Character Controller configurado correctamente.");
     }
 
     private void Update()
@@ -86,7 +86,7 @@ public class VRMovementFix : MonoBehaviour
         if (characterController == null) return;
 
         HandleGravity();
-        
+
         // Ground check con intervalo para optimizar
         if (Time.time - lastGroundCheckTime >= GROUND_CHECK_INTERVAL)
         {
@@ -106,31 +106,31 @@ public class VRMovementFix : MonoBehaviour
             // En el suelo: resetear velocidad vertical y aplicar fuerza de anclaje
             velocity.y = groundingForce;
             timeInAir = 0f;
-            
+
             if (!wasGrounded && debugGrounding)
             {
-                Debug.Log("[VRMovementFix] ✅ Player tocó el suelo");
+                Debug.Log("[VRMovementFix] Player tocó el suelo");
             }
-            
+
             wasGrounded = true;
         }
         else
         {
             // En el aire: aplicar gravedad
             timeInAir += Time.deltaTime;
-            
+
             // Solo aplicar gravedad si llevamos un tiempo en el aire (evita falsos positivos)
             if (timeInAir > 0.1f)
             {
                 velocity.y += gravity * Time.deltaTime;
                 velocity.y = Mathf.Max(velocity.y, maxFallSpeed);
             }
-            
+
             if (wasGrounded && debugGrounding && timeInAir > 0.2f)
             {
-                Debug.Log("[VRMovementFix] 🔵 Player dejó el suelo");
+                Debug.Log("[VRMovementFix] Player dejó el suelo");
             }
-            
+
             // Solo cambiar wasGrounded si llevamos suficiente tiempo en el aire
             if (timeInAir > 0.2f)
             {
@@ -149,8 +149,8 @@ public class VRMovementFix : MonoBehaviour
 
         // SphereCast mejorado para detectar suelo de forma más confiable
         Vector3 origin = transform.position + Vector3.up * (groundCheckRadius + 0.1f);
-        
-        if (!Physics.SphereCast(origin, groundCheckRadius, Vector3.down, out RaycastHit hit, 
+
+        if (!Physics.SphereCast(origin, groundCheckRadius, Vector3.down, out RaycastHit hit,
             groundCheckDistance + groundCheckRadius, groundLayers))
         {
             // No hay suelo cerca, aplicar fuerza hacia abajo suave
@@ -174,8 +174,8 @@ public class VRMovementFix : MonoBehaviour
         // Método 2: SphereCast desde el centro del controller
         Vector3 origin = transform.position + centerOffset;
         float distance = (controllerHeight / 2f) + groundedThreshold;
-        
-        if (Physics.SphereCast(origin, groundCheckRadius, Vector3.down, out RaycastHit hit, 
+
+        if (Physics.SphereCast(origin, groundCheckRadius, Vector3.down, out RaycastHit hit,
             distance, groundLayers))
         {
             return true;
@@ -184,13 +184,13 @@ public class VRMovementFix : MonoBehaviour
         // Método 3: Raycast desde múltiples puntos del círculo base
         Vector3 baseCenter = transform.position + centerOffset - Vector3.up * (controllerHeight / 2f);
         int rayCount = 4;
-        
+
         for (int i = 0; i < rayCount; i++)
         {
             float angle = (360f / rayCount) * i * Mathf.Deg2Rad;
             Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (controllerRadius * 0.8f);
             Vector3 rayOrigin = baseCenter + offset + Vector3.up * 0.1f;
-            
+
             if (Physics.Raycast(rayOrigin, Vector3.down, groundedThreshold + 0.1f, groundLayers))
             {
                 return true;
@@ -206,13 +206,13 @@ public class VRMovementFix : MonoBehaviour
 
         // Color según estado
         Gizmos.color = IsGroundedReliable() ? Color.green : Color.red;
-        
+
         Vector3 center = transform.position + centerOffset;
-        
+
         // Cilindro del character controller
         Gizmos.DrawWireSphere(center + Vector3.up * (controllerHeight / 2), controllerRadius);
         Gizmos.DrawWireSphere(center - Vector3.up * (controllerHeight / 2), controllerRadius);
-        
+
         // Línea de altura
         Gizmos.DrawLine(
             center - Vector3.up * (controllerHeight / 2),
@@ -224,21 +224,21 @@ public class VRMovementFix : MonoBehaviour
         {
             Gizmos.color = Color.yellow;
             Vector3 origin = transform.position + Vector3.up * (groundCheckRadius + 0.1f);
-            
+
             // SphereCast principal
             Gizmos.DrawWireSphere(origin, groundCheckRadius);
             Gizmos.DrawLine(origin, origin + Vector3.down * (groundCheckDistance + groundCheckRadius));
-            
+
             // Raycasts múltiples
             Vector3 baseCenter = transform.position + centerOffset - Vector3.up * (controllerHeight / 2f);
             int rayCount = 4;
-            
+
             for (int i = 0; i < rayCount; i++)
             {
                 float angle = (360f / rayCount) * i * Mathf.Deg2Rad;
                 Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (controllerRadius * 0.8f);
                 Vector3 rayOrigin = baseCenter + offset + Vector3.up * 0.1f;
-                
+
                 Gizmos.DrawLine(rayOrigin, rayOrigin + Vector3.down * (groundedThreshold + 0.1f));
             }
         }

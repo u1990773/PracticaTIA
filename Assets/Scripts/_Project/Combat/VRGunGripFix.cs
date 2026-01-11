@@ -27,7 +27,7 @@ public class VRGunGripFix : MonoBehaviour
 
     [Header("Grab Settings")]
     [SerializeField] private float smoothAmount = 20f;
-    
+
     [Header("Toggle Settings")]
     [Tooltip("Frames a esperar después de agarrar antes de permitir toggle")]
     [SerializeField] private int toggleCooldownFrames = 5;
@@ -43,7 +43,7 @@ public class VRGunGripFix : MonoBehaviour
 
     // Input detection
     private bool wasGripPressed = false;
-    
+
     // Cooldown para evitar toggle inmediato al agarrar
     private int framesSinceGrab = 999;
 
@@ -53,7 +53,7 @@ public class VRGunGripFix : MonoBehaviour
 
         if (grabInteractable == null)
         {
-            Debug.LogError("[VRGunGripFix] ❌ No XRGrabInteractable found!");
+            Debug.LogError("[VRGunGripFix] No XRGrabInteractable found!");
             enabled = false;
             return;
         }
@@ -69,7 +69,7 @@ public class VRGunGripFix : MonoBehaviour
         grabInteractable.selectExited.AddListener(OnReleased);
 
         if (showDebugLogs)
-            Debug.Log($"[VRGunGripFix] ✅ Toggle Mode FORZADO (V5) activado");
+            Debug.Log($"[VRGunGripFix] Toggle Mode FORZADO (V5) activado");
     }
 
     private void OnDestroy()
@@ -102,7 +102,7 @@ public class VRGunGripFix : MonoBehaviour
         if (gripJustPressed && isManuallyGrabbed && framesSinceGrab >= toggleCooldownFrames)
         {
             if (showDebugLogs)
-                Debug.Log("[VRGunGripFix] 🔓 Toggle OFF - Usuario quiere soltar");
+                Debug.Log("[VRGunGripFix] Toggle OFF - Usuario quiere soltar");
 
             allowRelease = true;
             ForceRelease();
@@ -129,7 +129,7 @@ public class VRGunGripFix : MonoBehaviour
         attachPoint = attachObj.transform;
 
         if (showDebugLogs)
-            Debug.Log("[VRGunGripFix] ✅ Attach point creado");
+            Debug.Log("[VRGunGripFix] Attach point creado");
     }
 
     private void ConfigureGrabInteractable()
@@ -160,13 +160,13 @@ public class VRGunGripFix : MonoBehaviour
             framesSinceGrab = 0; // CRÍTICO: Resetear contador
 
             if (showDebugLogs)
-                Debug.Log("[VRGunGripFix] ✅ Arma AGARRADA (Toggle ON)");
+                Debug.Log("[VRGunGripFix] Arma AGARRADA (Toggle ON)");
         }
         else
         {
             // Re-grab automático
             if (showDebugLogs)
-                Debug.Log("[VRGunGripFix] 🔄 Re-grab automático");
+                Debug.Log("[VRGunGripFix] Re-grab automático");
         }
 
         isReGrabbing = false;
@@ -183,13 +183,13 @@ public class VRGunGripFix : MonoBehaviour
             framesSinceGrab = 999;
 
             if (showDebugLogs)
-                Debug.Log("[VRGunGripFix] 🔓 Arma SOLTADA (Toggle OFF)");
+                Debug.Log("[VRGunGripFix] Arma SOLTADA (Toggle OFF)");
         }
         else if (isManuallyGrabbed && useToggleMode)
         {
             // Release NO permitido → Re-agarrar
             if (showDebugLogs)
-                Debug.Log("[VRGunGripFix] ⚠️ Release no permitido - RE-AGARRANDO");
+                Debug.Log("[VRGunGripFix] Release no permitido - RE-AGARRANDO");
 
             StartCoroutine(ReGrabAfterFrame(args.interactorObject));
         }
@@ -210,7 +210,7 @@ public class VRGunGripFix : MonoBehaviour
             interactionManager.SelectEnter(interactor, grabInteractable);
 
             if (showDebugLogs)
-                Debug.Log("[VRGunGripFix] ✅ RE-GRAB exitoso");
+                Debug.Log("[VRGunGripFix] RE-GRAB exitoso");
         }
     }
 
@@ -224,7 +224,7 @@ public class VRGunGripFix : MonoBehaviour
             interactionManager.SelectExit(lastInteractor, grabInteractable);
 
             if (showDebugLogs)
-                Debug.Log("[VRGunGripFix] ✅ Release FORZADO");
+                Debug.Log("[VRGunGripFix] Release FORZADO");
         }
     }
 

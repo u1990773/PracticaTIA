@@ -70,33 +70,33 @@ public class VRBootstrapLoader : MonoBehaviour
                 {
                     pm.vrMode = true;
                     pm.enabled = false; // ⭐ Desactivar script completamente (evita conflictos)
-                    Debug.Log("[VRBootstrapLoader] ✅ PlayerMovementQ desactivado.");
+                    Debug.Log("[VRBootstrapLoader] PlayerMovementQ desactivado.");
                 }
 
-                // ⭐ Desactivar CharacterController legacy (evita conflicto de física)
+                // Desactivar CharacterController legacy (evita conflicto de física)
                 var cc = legacyPlayer.GetComponent<CharacterController>();
                 if (cc != null)
                 {
                     cc.enabled = false;
-                    Debug.Log("[VRBootstrapLoader] ✅ CharacterController legacy desactivado.");
+                    Debug.Log("[VRBootstrapLoader] CharacterController legacy desactivado.");
                 }
 
-                // ⭐ Desactivar Rigidbody si existe
+                // Desactivar Rigidbody si existe
                 var rb = legacyPlayer.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
                     rb.isKinematic = true;
-                    Debug.Log("[VRBootstrapLoader] ✅ Rigidbody legacy en modo kinematic.");
+                    Debug.Log("[VRBootstrapLoader] Rigidbody legacy en modo kinematic.");
                 }
 
-                // ⭐ Hacer el Player legacy hijo del XR Origin (se mueve junto al headset)
+                // Hacer el Player legacy hijo del XR Origin (se mueve junto al headset)
                 legacyPlayer.transform.SetParent(xrOrigin.transform);
                 legacyPlayer.transform.localPosition = Vector3.zero;
                 legacyPlayer.transform.localRotation = Quaternion.identity;
-                Debug.Log("[VRBootstrapLoader] ✅ Player legacy ahora es hijo de XR Origin.");
+                Debug.Log("[VRBootstrapLoader] Player legacy ahora es hijo de XR Origin.");
             }
 
-            // Oculta el arma FPS legacy (opcional)
+            // Oculta el arma FPS legacy 
             if (hideLegacyGun)
             {
                 var gun = legacyPlayer.transform.Find(legacyGunChildName);
@@ -111,7 +111,7 @@ public class VRBootstrapLoader : MonoBehaviour
             if (camCtrl != null) camCtrl.enabled = false;
         }
 
-        // 6) Apagar canvases 2D (opcional)
+        // 6) Apagar canvases 2D 
         if (disableScreenSpaceCanvases)
         {
             foreach (var c in FindObjectsOfType<Canvas>(true))
@@ -177,14 +177,7 @@ public class VRBootstrapLoader : MonoBehaviour
         // 9) Espera 1 frame extra para que corran Start() de objetos en Main (Notas, etc.)
         yield return null;
 
-        // 10) Configurar notas a VR (grabbable + recoger al agarrar)
-        if (setupNotesForVR)
-        {
-            var notesSetup = FindObjectOfType<VRNotesSetup>(true);
-            if (notesSetup != null) notesSetup.SetupAllNotes();
-            else Debug.LogWarning("[VRBootstrapLoader] No se encontró VRNotesSetup en escena.");
-        }
 
-        Debug.Log("[VRBootstrapLoader] ✅ Main cargada y VR preparado correctamente.");
+        Debug.Log("[VRBootstrapLoader] Main cargada y VR preparado correctamente.");
     }
 }

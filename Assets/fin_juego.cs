@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;  
+using UnityEngine.SceneManagement;
 
 public class FinDeJuego : MonoBehaviour
 {
@@ -22,7 +22,7 @@ public class FinDeJuego : MonoBehaviour
             if (jugador.notasRecogidas >= notasNecesarias)
             {
 
-                Debug.Log("�Juego Terminado!");
+                Debug.Log("Juego Terminado!");
 
                 SceneManager.LoadScene("GameOver");
 
