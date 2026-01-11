@@ -1,19 +1,18 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using System.Collections;
 
 /// <summary>
-/// Configura el agarre perfecto del arma VR.
-/// VERSIÓN MEJORADA V2 - Sin errores de compilación:
-/// - Posición correcta en la mano
-/// - Rotación correcta (apunta adelante)
-/// - Modo TOGGLE (no necesitas mantener presionado)
-/// - Attach point optimizado
+/// SOLUCIÓN DEFINITIVA V5: Toggle con protección contra detección prematura.
+/// 
+/// Arregla el bug donde detectaba el agarre inicial como "toggle off".
+/// 
+/// REEMPLAZA completamente tu VRGunGripFix.cs actual.
 /// </summary>
 [RequireComponent(typeof(XRGrabInteractable))]
 public class VRGunGripFix : MonoBehaviour
 {
-    [Header("⭐ MODO TOGGLE - No mantener presionado")]
-    [Tooltip("Si true, presiona una vez para agarrar, otra vez para soltar")]
+    [Header("⭐ MODO TOGGLE FORZADO (Re-Grab V2)")]
     [SerializeField] private bool useToggleMode = true;
 
     [Header("Attach Point Configuration")]
@@ -21,26 +20,32 @@ public class VRGunGripFix : MonoBehaviour
     [SerializeField] private bool autoCreateAttachPoint = true;
 
     [Header("Position (relativo al arma)")]
-    [Tooltip("Hacia atrás = grip de pistola")]
     [SerializeField] private Vector3 attachPointLocalPosition = new Vector3(0, -0.05f, -0.15f);
-    // X = izq/der, Y = arriba/abajo, Z = adelante/atrás
 
     [Header("Rotation (para que apunte adelante)")]
-    [Tooltip("Ajusta hasta que el arma apunte adelante cuando la agarres")]
     [SerializeField] private Vector3 attachPointLocalRotation = new Vector3(0, 0, 0);
-    // Prueba: (0,0,0), (-90,0,0), (0,-90,0), (0,0,-90)
 
-    [Header("Advanced Grab Settings")]
-    [SerializeField] private bool useDynamicAttach = false;
-    [SerializeField] private bool throwOnDetach = false;
-    [SerializeField] private bool instantSnap = false;
+    [Header("Grab Settings")]
     [SerializeField] private float smoothAmount = 20f;
+    
+    [Header("Toggle Settings")]
+    [Tooltip("Frames a esperar después de agarrar antes de permitir toggle")]
+    [SerializeField] private int toggleCooldownFrames = 5;
 
-    [Header("Visual Helpers")]
-    [SerializeField] private bool showGizmos = true;
-    [SerializeField] private Color gizmoColor = Color.cyan;
+    [Header("Debug")]
+    [SerializeField] private bool showDebugLogs = true;
 
     private XRGrabInteractable grabInteractable;
+    private IXRSelectInteractor lastInteractor;
+    private bool isManuallyGrabbed = false;
+    private bool allowRelease = false;
+    private bool isReGrabbing = false;
+
+    // Input detection
+    private bool wasGripPressed = false;
+    
+    // Cooldown para evitar toggle inmediato al agarrar
+    private int framesSinceGrab = 999;
 
     private void Start()
     {
@@ -48,21 +53,71 @@ public class VRGunGripFix : MonoBehaviour
 
         if (grabInteractable == null)
         {
-            Debug.LogError("[VRGunGripFix] ❌ No se encontró XRGrabInteractable.");
+            Debug.LogError("[VRGunGripFix] ❌ No XRGrabInteractable found!");
             enabled = false;
             return;
         }
 
-        // Crear attach point si no existe
         if (attachPoint == null && autoCreateAttachPoint)
         {
             CreateAttachPoint();
         }
 
-        // Configurar grab settings COMPLETO
         ConfigureGrabInteractable();
 
-        Debug.Log($"[VRGunGripFix] ✅ Arma configurada. Modo Toggle: {useToggleMode}, Attach point: {attachPoint.localPosition}");
+        grabInteractable.selectEntered.AddListener(OnGrabbed);
+        grabInteractable.selectExited.AddListener(OnReleased);
+
+        if (showDebugLogs)
+            Debug.Log($"[VRGunGripFix] ✅ Toggle Mode FORZADO (V5) activado");
+    }
+
+    private void OnDestroy()
+    {
+        if (grabInteractable != null)
+        {
+            grabInteractable.selectEntered.RemoveListener(OnGrabbed);
+            grabInteractable.selectExited.RemoveListener(OnReleased);
+        }
+    }
+
+    private void Update()
+    {
+        if (!useToggleMode) return;
+
+        // Incrementar contador de frames
+        if (isManuallyGrabbed)
+        {
+            framesSinceGrab++;
+        }
+
+        // Detectar input
+        bool gripPressed = DetectGripInput();
+        bool gripJustPressed = gripPressed && !wasGripPressed;
+
+        // Solo procesar toggle si:
+        // 1. El arma está agarrada
+        // 2. Han pasado suficientes frames desde el agarre
+        // 3. El usuario acaba de presionar el botón
+        if (gripJustPressed && isManuallyGrabbed && framesSinceGrab >= toggleCooldownFrames)
+        {
+            if (showDebugLogs)
+                Debug.Log("[VRGunGripFix] 🔓 Toggle OFF - Usuario quiere soltar");
+
+            allowRelease = true;
+            ForceRelease();
+        }
+
+        wasGripPressed = gripPressed;
+    }
+
+    private bool DetectGripInput()
+    {
+#if UNITY_EDITOR
+        return Input.GetKey(KeyCode.G);
+#else
+        return false;
+#endif
     }
 
     private void CreateAttachPoint()
@@ -73,195 +128,135 @@ public class VRGunGripFix : MonoBehaviour
         attachObj.transform.localEulerAngles = attachPointLocalRotation;
         attachPoint = attachObj.transform;
 
-        Debug.Log("[VRGunGripFix] ✅ Attach point creado automáticamente.");
+        if (showDebugLogs)
+            Debug.Log("[VRGunGripFix] ✅ Attach point creado");
     }
 
     private void ConfigureGrabInteractable()
     {
-        if (grabInteractable == null) return;
-
-        // ========================================
-        // 1. ATTACH POINT - Posición correcta
-        // ========================================
         grabInteractable.attachTransform = attachPoint;
-
-        // ========================================
-        // 2. SELECT MODE - CRITICAL para Toggle
-        // ========================================
         grabInteractable.selectMode = InteractableSelectMode.Single;
-
-        // ========================================
-        // 3. MOVEMENT TYPE - Instantaneous
-        // ========================================
         grabInteractable.movementType = XRBaseInteractable.MovementType.Instantaneous;
-
-        // ========================================
-        // 4. TRACKING - Sigue la mano
-        // ========================================
         grabInteractable.trackPosition = true;
         grabInteractable.trackRotation = true;
+        grabInteractable.attachEaseInTime = 0.05f;
+        grabInteractable.smoothPosition = true;
+        grabInteractable.smoothPositionAmount = smoothAmount;
+        grabInteractable.smoothRotation = true;
+        grabInteractable.smoothRotationAmount = smoothAmount;
+        grabInteractable.throwOnDetach = false;
+        grabInteractable.useDynamicAttach = false;
+    }
 
-        // ========================================
-        // 5. SMOOTH MOVEMENT - Transición suave
-        // ========================================
-        if (instantSnap)
+    private void OnGrabbed(SelectEnterEventArgs args)
+    {
+        lastInteractor = args.interactorObject;
+
+        if (!isReGrabbing)
         {
-            // Snap instantáneo
-            grabInteractable.attachEaseInTime = 0f;
-            grabInteractable.smoothPosition = false;
-            grabInteractable.smoothRotation = false;
+            // Agarre inicial del usuario
+            isManuallyGrabbed = true;
+            allowRelease = false;
+            framesSinceGrab = 0; // CRÍTICO: Resetear contador
+
+            if (showDebugLogs)
+                Debug.Log("[VRGunGripFix] ✅ Arma AGARRADA (Toggle ON)");
         }
         else
         {
-            // Smooth (recomendado)
-            grabInteractable.attachEaseInTime = 0.05f;
-            grabInteractable.smoothPosition = true;
-            grabInteractable.smoothPositionAmount = smoothAmount;
-            grabInteractable.smoothRotation = true;
-            grabInteractable.smoothRotationAmount = smoothAmount;
+            // Re-grab automático
+            if (showDebugLogs)
+                Debug.Log("[VRGunGripFix] 🔄 Re-grab automático");
         }
 
-        // ========================================
-        // 6. DYNAMIC ATTACH - Opcional
-        // ========================================
-        grabInteractable.useDynamicAttach = useDynamicAttach;
+        isReGrabbing = false;
+    }
 
-        // ========================================
-        // 7. THROW ON DETACH - No lanzar
-        // ========================================
-        grabInteractable.throwOnDetach = throwOnDetach;
-
-        // ========================================
-        // NOTA: La línea problemática ha sido REMOVIDA
-        // grabInteractable.startingSelectedInteractable = null;
-        // Esta propiedad no existe en todas las versiones del XR Toolkit
-        // ========================================
-
-        if (useToggleMode)
+    private void OnReleased(SelectExitEventArgs args)
+    {
+        if (allowRelease)
         {
-            Debug.Log("[VRGunGripFix] ✅ Modo Toggle activado (presiona G una vez para agarrar, otra para soltar)");
+            // Release permitido (usuario quiere soltar)
+            isManuallyGrabbed = false;
+            allowRelease = false;
+            lastInteractor = null;
+            framesSinceGrab = 999;
+
+            if (showDebugLogs)
+                Debug.Log("[VRGunGripFix] 🔓 Arma SOLTADA (Toggle OFF)");
         }
-        else
+        else if (isManuallyGrabbed && useToggleMode)
         {
-            Debug.Log("[VRGunGripFix] ⚠️ Modo Hold activado (debes mantener presionado)");
+            // Release NO permitido → Re-agarrar
+            if (showDebugLogs)
+                Debug.Log("[VRGunGripFix] ⚠️ Release no permitido - RE-AGARRANDO");
+
+            StartCoroutine(ReGrabAfterFrame(args.interactorObject));
         }
     }
 
-    /// <summary>
-    /// Ajusta la posición del attach point en runtime.
-    /// Útil para testing.
-    /// </summary>
+    private IEnumerator ReGrabAfterFrame(IXRSelectInteractor interactor)
+    {
+        yield return null;
+
+        if (!isManuallyGrabbed) yield break;
+        if (interactor == null) yield break;
+
+        isReGrabbing = true;
+
+        var interactionManager = grabInteractable.interactionManager;
+        if (interactionManager != null)
+        {
+            interactionManager.SelectEnter(interactor, grabInteractable);
+
+            if (showDebugLogs)
+                Debug.Log("[VRGunGripFix] ✅ RE-GRAB exitoso");
+        }
+    }
+
+    private void ForceRelease()
+    {
+        if (lastInteractor == null) return;
+
+        var interactionManager = grabInteractable.interactionManager;
+        if (interactionManager != null)
+        {
+            interactionManager.SelectExit(lastInteractor, grabInteractable);
+
+            if (showDebugLogs)
+                Debug.Log("[VRGunGripFix] ✅ Release FORZADO");
+        }
+    }
+
     public void SetAttachPosition(Vector3 localPos)
     {
         if (attachPoint != null)
         {
             attachPoint.localPosition = localPos;
             attachPointLocalPosition = localPos;
-            Debug.Log($"[VRGunGripFix] Posición actualizada: {localPos}");
         }
     }
 
-    /// <summary>
-    /// Ajusta la rotación del attach point en runtime.
-    /// </summary>
     public void SetAttachRotation(Vector3 localRot)
     {
         if (attachPoint != null)
         {
             attachPoint.localEulerAngles = localRot;
             attachPointLocalRotation = localRot;
-            Debug.Log($"[VRGunGripFix] Rotación actualizada: {localRot}");
         }
-    }
-
-    /// <summary>
-    /// Presets comunes de rotación.
-    /// </summary>
-    public void ApplyRotationPreset(string presetName)
-    {
-        Vector3 rotation = presetName.ToLower() switch
-        {
-            "forward" => new Vector3(0, 0, 0),      // Apunta adelante
-            "up" => new Vector3(-90, 0, 0),          // Apunta arriba
-            "down" => new Vector3(90, 0, 0),         // Apunta abajo
-            "right" => new Vector3(0, -90, 0),       // Apunta derecha
-            "left" => new Vector3(0, 90, 0),         // Apunta izquierda
-            _ => Vector3.zero
-        };
-
-        SetAttachRotation(rotation);
-        Debug.Log($"[VRGunGripFix] ✅ Preset '{presetName}' aplicado: {rotation}");
-    }
-
-    /// <summary>
-    /// Activa/desactiva el modo Toggle en runtime.
-    /// </summary>
-    public void SetToggleMode(bool toggle)
-    {
-        useToggleMode = toggle;
-        Debug.Log($"[VRGunGripFix] Modo Toggle: {(toggle ? "ACTIVADO" : "DESACTIVADO")}");
     }
 
     private void OnDrawGizmosSelected()
     {
-        if (!showGizmos || attachPoint == null) return;
+        if (attachPoint == null) return;
 
-        // Dibujar punto de agarre
-        Gizmos.color = gizmoColor;
+        Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(attachPoint.position, 0.03f);
 
-        // Dibujar dirección del agarre (forward = rojo)
         Gizmos.color = Color.red;
         Gizmos.DrawLine(attachPoint.position, attachPoint.position + attachPoint.forward * 0.15f);
 
-        // Dibujar up (verde)
         Gizmos.color = Color.green;
         Gizmos.DrawLine(attachPoint.position, attachPoint.position + attachPoint.up * 0.1f);
-
-        // Dibujar right (azul)
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(attachPoint.position, attachPoint.position + attachPoint.right * 0.1f);
-
-#if UNITY_EDITOR
-        // Label
-        UnityEditor.Handles.Label(attachPoint.position + Vector3.up * 0.05f, 
-            $"Grip Point\n{(useToggleMode ? "Toggle Mode" : "Hold Mode")}");
-#endif
     }
-
-#if UNITY_EDITOR
-    // ========================================
-    // BOTONES DE TESTING EN INSPECTOR
-    // ========================================
-    
-    [ContextMenu("✅ Test: Rotate Forward (0,0,0)")]
-    void TestForward() => ApplyRotationPreset("forward");
-    
-    [ContextMenu("✅ Test: Rotate Up (-90,0,0)")]
-    void TestUp() => ApplyRotationPreset("up");
-    
-    [ContextMenu("✅ Test: Rotate Down (90,0,0)")]
-    void TestDown() => ApplyRotationPreset("down");
-    
-    [ContextMenu("✅ Test: Rotate Right (0,-90,0)")]
-    void TestRight() => ApplyRotationPreset("right");
-    
-    [ContextMenu("✅ Test: Rotate Left (0,90,0)")]
-    void TestLeft() => ApplyRotationPreset("left");
-    
-    [ContextMenu("🔧 Test: Move Grip Back (más atrás)")]
-    void TestMoveBack() => SetAttachPosition(attachPointLocalPosition + Vector3.back * 0.05f);
-    
-    [ContextMenu("🔧 Test: Move Grip Forward (más adelante)")]
-    void TestMoveForward() => SetAttachPosition(attachPointLocalPosition + Vector3.forward * 0.05f);
-    
-    [ContextMenu("🔧 Test: Move Grip Up")]
-    void TestMoveUp() => SetAttachPosition(attachPointLocalPosition + Vector3.up * 0.05f);
-    
-    [ContextMenu("🔧 Test: Move Grip Down")]
-    void TestMoveDown() => SetAttachPosition(attachPointLocalPosition + Vector3.down * 0.05f);
-    
-    [ContextMenu("⚙️ Toggle: Activar/Desactivar Toggle Mode")]
-    void ToggleMode() => SetToggleMode(!useToggleMode);
-#endif
 }

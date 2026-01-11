@@ -5416,7 +5416,12 @@ PrefabInstance:
     - target: {fileID: 4727881484672851877, guid: 1569ed3550602dd4fb3ec85da33a5a66,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4727881484672851877, guid: 1569ed3550602dd4fb3ec85da33a5a66,
+        type: 3}
+      propertyPath: useToggleMode
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5105245581331140779, guid: 1569ed3550602dd4fb3ec85da33a5a66,
         type: 3}
@@ -5476,37 +5481,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 265816909474137945, guid: 1569ed3550602dd4fb3ec85da33a5a66,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 849948287}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1569ed3550602dd4fb3ec85da33a5a66, type: 3}
---- !u!1 &849948286 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 265816909474137945, guid: 1569ed3550602dd4fb3ec85da33a5a66,
-    type: 3}
-  m_PrefabInstance: {fileID: 849948285}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &849948287
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 849948286}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d22e5759bd36dc645bdfcd3b0fc22758, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fixOnStart: 1
-  gripPosition: {x: 0, y: -0.05, z: -0.15}
-  gripRotation: {x: 0, y: 0, z: 0}
-  useToggleMode: 1
-  useDynamicAttach: 0
-  smoothAmount: 20
-  instantSnap: 0
 --- !u!114 &904709394
 MonoBehaviour:
   m_ObjectHideFlags: 0
