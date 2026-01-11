@@ -2,8 +2,11 @@ using UnityEngine;
 using Unity.XR.CoreUtils;
 
 /// <summary>
-/// Arregla el problema de movimiento flotante/atravesar suelos.
-/// Asegura que el XR Origin tenga física correcta.
+/// VERSIÓN MEJORADA v2 - Soluciona problema de "Player dejó el suelo" constante.
+/// Mejoras:
+/// - Detección de suelo más confiable
+/// - Gravedad adaptativa
+/// - No spam de logs
 /// </summary>
 [RequireComponent(typeof(XROrigin))]
 public class VRMovementFix : MonoBehaviour
@@ -16,28 +19,43 @@ public class VRMovementFix : MonoBehaviour
 
     [Header("Gravity")]
     [SerializeField] private bool applyGravity = true;
-    [SerializeField] private float gravity = -9.81f;
+    [SerializeField] private float gravity = -20f; // Más fuerte
+    [SerializeField] private float groundingForce = -5f; // Más fuerte para mantener pegado
 
-    [Header("Grounding")]
+    [Header("Grounding - MEJORADO")]
     [SerializeField] private bool stickToGround = true;
-    [SerializeField] private float groundCheckDistance = 0.1f;
+    [SerializeField] private float groundCheckDistance = 0.3f; // Aumentado
     [SerializeField] private LayerMask groundLayers = ~0;
+    [SerializeField] private bool debugGrounding = false; // DESACTIVADO para no spam logs
+    [SerializeField] private float groundCheckRadius = 0.25f; // Radio para SphereCast
+
+    [Header("Movement Settings")]
+    [SerializeField] private float minMoveDistance = 0.001f;
+    [SerializeField] private float skinWidth = 0.08f;
+    [SerializeField] private float stepOffset = 0.3f;
+    
+    [Header("Anti-Float Settings")]
+    [SerializeField] private float maxFallSpeed = -53f; // Velocidad máxima de caída
+    [SerializeField] private float groundedThreshold = 0.1f; // Threshold para considerar "grounded"
 
     private CharacterController characterController;
     private XROrigin xrOrigin;
     private Vector3 velocity;
+    private bool wasGrounded;
+    private float timeInAir = 0f;
+    private float lastGroundCheckTime;
+    private const float GROUND_CHECK_INTERVAL = 0.05f; // Check cada 0.05s en vez de cada frame
 
     private void Start()
     {
         xrOrigin = GetComponent<XROrigin>();
 
-        // Añadir o configurar Character Controller
         characterController = GetComponent<CharacterController>();
 
         if (characterController == null && autoAddCharacterController)
         {
             characterController = gameObject.AddComponent<CharacterController>();
-            Debug.Log("[VRMovementFix] Character Controller añadido automáticamente.");
+            Debug.Log("[VRMovementFix] ✅ Character Controller añadido automáticamente.");
         }
 
         if (characterController != null)
@@ -46,7 +64,8 @@ public class VRMovementFix : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[VRMovementFix] No hay Character Controller. El movimiento puede ser inestable.");
+            Debug.LogError("[VRMovementFix] ❌ No hay Character Controller. El movimiento no funcionará correctamente.");
+            enabled = false;
         }
     }
 
@@ -55,60 +74,215 @@ public class VRMovementFix : MonoBehaviour
         characterController.height = controllerHeight;
         characterController.radius = controllerRadius;
         characterController.center = centerOffset;
-        characterController.skinWidth = 0.08f;
-        characterController.minMoveDistance = 0.001f;
+        characterController.skinWidth = skinWidth;
+        characterController.minMoveDistance = minMoveDistance;
+        characterController.stepOffset = stepOffset;
 
-        Debug.Log("[VRMovementFix] Character Controller configurado correctamente.");
+        Debug.Log("[VRMovementFix] ✅ Character Controller configurado correctamente.");
     }
 
     private void Update()
     {
         if (characterController == null) return;
 
-        // Aplicar gravedad
-        if (applyGravity)
+        HandleGravity();
+        
+        // Ground check con intervalo para optimizar
+        if (Time.time - lastGroundCheckTime >= GROUND_CHECK_INTERVAL)
         {
-            if (characterController.isGrounded)
+            HandleGrounding();
+            lastGroundCheckTime = Time.time;
+        }
+    }
+
+    private void HandleGravity()
+    {
+        if (!applyGravity) return;
+
+        bool isGrounded = IsGroundedReliable();
+
+        if (isGrounded)
+        {
+            // En el suelo: resetear velocidad vertical y aplicar fuerza de anclaje
+            velocity.y = groundingForce;
+            timeInAir = 0f;
+            
+            if (!wasGrounded && debugGrounding)
             {
-                // En el suelo: resetear velocidad vertical
-                if (velocity.y < 0)
-                {
-                    velocity.y = -2f; // Pequeña fuerza hacia abajo para mantener grounded
-                }
+                Debug.Log("[VRMovementFix] ✅ Player tocó el suelo");
             }
-            else
+            
+            wasGrounded = true;
+        }
+        else
+        {
+            // En el aire: aplicar gravedad
+            timeInAir += Time.deltaTime;
+            
+            // Solo aplicar gravedad si llevamos un tiempo en el aire (evita falsos positivos)
+            if (timeInAir > 0.1f)
             {
-                // En el aire: aplicar gravedad
                 velocity.y += gravity * Time.deltaTime;
+                velocity.y = Mathf.Max(velocity.y, maxFallSpeed);
             }
-
-            // Aplicar movimiento vertical (gravedad)
-            characterController.Move(velocity * Time.deltaTime);
-        }
-
-        // Stick to ground (evita flotar)
-        if (stickToGround && characterController.isGrounded)
-        {
-            // Pequeño raycast hacia abajo para asegurar que está en el suelo
-            if (!Physics.Raycast(transform.position, Vector3.down, groundCheckDistance, groundLayers))
+            
+            if (wasGrounded && debugGrounding && timeInAir > 0.2f)
             {
-                // No hay suelo cerca, aplicar fuerza hacia abajo
-                characterController.Move(Vector3.down * 0.1f);
+                Debug.Log("[VRMovementFix] 🔵 Player dejó el suelo");
+            }
+            
+            // Solo cambiar wasGrounded si llevamos suficiente tiempo en el aire
+            if (timeInAir > 0.2f)
+            {
+                wasGrounded = false;
             }
         }
+
+        // Aplicar movimiento vertical
+        characterController.Move(velocity * Time.deltaTime);
+    }
+
+    private void HandleGrounding()
+    {
+        if (!stickToGround) return;
+        if (!IsGroundedReliable()) return;
+
+        // SphereCast mejorado para detectar suelo de forma más confiable
+        Vector3 origin = transform.position + Vector3.up * (groundCheckRadius + 0.1f);
+        
+        if (!Physics.SphereCast(origin, groundCheckRadius, Vector3.down, out RaycastHit hit, 
+            groundCheckDistance + groundCheckRadius, groundLayers))
+        {
+            // No hay suelo cerca, aplicar fuerza hacia abajo suave
+            characterController.Move(Vector3.down * 0.1f * Time.deltaTime);
+        }
+    }
+
+    /// <summary>
+    /// Detección de suelo más confiable usando múltiples métodos.
+    /// </summary>
+    private bool IsGroundedReliable()
+    {
+        if (characterController == null) return false;
+
+        // Método 1: CharacterController.isGrounded (rápido pero a veces impreciso)
+        if (characterController.isGrounded)
+        {
+            return true;
+        }
+
+        // Método 2: SphereCast desde el centro del controller
+        Vector3 origin = transform.position + centerOffset;
+        float distance = (controllerHeight / 2f) + groundedThreshold;
+        
+        if (Physics.SphereCast(origin, groundCheckRadius, Vector3.down, out RaycastHit hit, 
+            distance, groundLayers))
+        {
+            return true;
+        }
+
+        // Método 3: Raycast desde múltiples puntos del círculo base
+        Vector3 baseCenter = transform.position + centerOffset - Vector3.up * (controllerHeight / 2f);
+        int rayCount = 4;
+        
+        for (int i = 0; i < rayCount; i++)
+        {
+            float angle = (360f / rayCount) * i * Mathf.Deg2Rad;
+            Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (controllerRadius * 0.8f);
+            Vector3 rayOrigin = baseCenter + offset + Vector3.up * 0.1f;
+            
+            if (Physics.Raycast(rayOrigin, Vector3.down, groundedThreshold + 0.1f, groundLayers))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void OnDrawGizmosSelected()
     {
-        // Visualizar Character Controller
-        if (characterController != null)
+        if (characterController == null) return;
+
+        // Color según estado
+        Gizmos.color = IsGroundedReliable() ? Color.green : Color.red;
+        
+        Vector3 center = transform.position + centerOffset;
+        
+        // Cilindro del character controller
+        Gizmos.DrawWireSphere(center + Vector3.up * (controllerHeight / 2), controllerRadius);
+        Gizmos.DrawWireSphere(center - Vector3.up * (controllerHeight / 2), controllerRadius);
+        
+        // Línea de altura
+        Gizmos.DrawLine(
+            center - Vector3.up * (controllerHeight / 2),
+            center + Vector3.up * (controllerHeight / 2)
+        );
+
+        // Visualizar ground checks
+        if (stickToGround)
         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(transform.position + centerOffset, controllerRadius);
-            Gizmos.DrawLine(
-                transform.position + centerOffset - Vector3.up * (controllerHeight / 2),
-                transform.position + centerOffset + Vector3.up * (controllerHeight / 2)
-            );
+            Gizmos.color = Color.yellow;
+            Vector3 origin = transform.position + Vector3.up * (groundCheckRadius + 0.1f);
+            
+            // SphereCast principal
+            Gizmos.DrawWireSphere(origin, groundCheckRadius);
+            Gizmos.DrawLine(origin, origin + Vector3.down * (groundCheckDistance + groundCheckRadius));
+            
+            // Raycasts múltiples
+            Vector3 baseCenter = transform.position + centerOffset - Vector3.up * (controllerHeight / 2f);
+            int rayCount = 4;
+            
+            for (int i = 0; i < rayCount; i++)
+            {
+                float angle = (360f / rayCount) * i * Mathf.Deg2Rad;
+                Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * (controllerRadius * 0.8f);
+                Vector3 rayOrigin = baseCenter + offset + Vector3.up * 0.1f;
+                
+                Gizmos.DrawLine(rayOrigin, rayOrigin + Vector3.down * (groundedThreshold + 0.1f));
+            }
         }
     }
+
+    #region Public API
+
+    public void ForceGrounded()
+    {
+        if (characterController != null)
+        {
+            velocity.y = groundingForce;
+            characterController.Move(Vector3.down * 0.5f);
+            timeInAir = 0f;
+            wasGrounded = true;
+        }
+    }
+
+    public bool IsGrounded()
+    {
+        return IsGroundedReliable();
+    }
+
+    public void TeleportTo(Vector3 position)
+    {
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+            transform.position = position;
+            characterController.enabled = true;
+            velocity = Vector3.zero;
+            velocity.y = groundingForce;
+            timeInAir = 0f;
+            wasGrounded = true;
+        }
+    }
+
+    /// <summary>
+    /// Desactiva temporalmente los logs de grounding.
+    /// </summary>
+    public void SetDebugGrounding(bool enabled)
+    {
+        debugGrounding = enabled;
+    }
+
+    #endregion
 }

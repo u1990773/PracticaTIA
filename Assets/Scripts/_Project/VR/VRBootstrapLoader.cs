@@ -8,6 +8,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 #endif
 
+/// <summary>
+/// VERSIÓN ARREGLADA - Soluciona problemas de movimiento flotante y bugueado
+/// </summary>
 public class VRBootstrapLoader : MonoBehaviour
 {
     [Header("Scene names (must match Build Settings)")]
@@ -21,7 +24,7 @@ public class VRBootstrapLoader : MonoBehaviour
     [SerializeField] private bool setLegacyPlayerVrMode = true;
 
     [Header("Optional cleanup to avoid duplicates")]
-    [SerializeField] private bool disableScreenSpaceCanvases = false; // si quieres quitar UI 2D
+    [SerializeField] private bool disableScreenSpaceCanvases = false;
     [SerializeField] private bool disableLegacyMouseLook = true;
     [SerializeField] private bool disableAllCamerasExceptXr = true;
     [SerializeField] private bool fixEventSystems = true;
@@ -49,7 +52,6 @@ public class VRBootstrapLoader : MonoBehaviour
         GameObject legacyPlayer = GameObject.FindWithTag(legacyPlayerTag);
         if (legacyPlayer == null)
         {
-            // Fallback por si el tag no está bien
             var pmFallback = FindObjectOfType<PlayerMovementQ>(true);
             if (pmFallback != null) legacyPlayer = pmFallback.gameObject;
         }
@@ -60,11 +62,38 @@ public class VRBootstrapLoader : MonoBehaviour
             xrOrigin.transform.position = legacyPlayer.transform.position;
             xrOrigin.transform.rotation = Quaternion.Euler(0f, legacyPlayer.transform.eulerAngles.y, 0f);
 
-            // IMPORTANTE: desactiva movimiento/salto legacy en VR
+            // ⭐ ARREGLO CRÍTICO: Desactivar COMPLETAMENTE el sistema de movimiento legacy
             if (setLegacyPlayerVrMode)
             {
                 var pm = legacyPlayer.GetComponent<PlayerMovementQ>();
-                if (pm != null) pm.vrMode = true;
+                if (pm != null)
+                {
+                    pm.vrMode = true;
+                    pm.enabled = false; // ⭐ Desactivar script completamente (evita conflictos)
+                    Debug.Log("[VRBootstrapLoader] ✅ PlayerMovementQ desactivado.");
+                }
+
+                // ⭐ Desactivar CharacterController legacy (evita conflicto de física)
+                var cc = legacyPlayer.GetComponent<CharacterController>();
+                if (cc != null)
+                {
+                    cc.enabled = false;
+                    Debug.Log("[VRBootstrapLoader] ✅ CharacterController legacy desactivado.");
+                }
+
+                // ⭐ Desactivar Rigidbody si existe
+                var rb = legacyPlayer.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    rb.isKinematic = true;
+                    Debug.Log("[VRBootstrapLoader] ✅ Rigidbody legacy en modo kinematic.");
+                }
+
+                // ⭐ Hacer el Player legacy hijo del XR Origin (se mueve junto al headset)
+                legacyPlayer.transform.SetParent(xrOrigin.transform);
+                legacyPlayer.transform.localPosition = Vector3.zero;
+                legacyPlayer.transform.localRotation = Quaternion.identity;
+                Debug.Log("[VRBootstrapLoader] ✅ Player legacy ahora es hijo de XR Origin.");
             }
 
             // Oculta el arma FPS legacy (opcional)
@@ -156,6 +185,6 @@ public class VRBootstrapLoader : MonoBehaviour
             else Debug.LogWarning("[VRBootstrapLoader] No se encontró VRNotesSetup en escena.");
         }
 
-        Debug.Log("[VRBootstrapLoader] Main cargada y VR preparado.");
+        Debug.Log("[VRBootstrapLoader] ✅ Main cargada y VR preparado correctamente.");
     }
 }
