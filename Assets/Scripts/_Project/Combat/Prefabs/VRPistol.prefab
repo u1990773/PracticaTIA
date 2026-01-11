@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 5105245581331140779}
   - component: {fileID: 855504114522562127}
   - component: {fileID: 3394188856315686088}
+  - component: {fileID: 2799838097078640918}
+  - component: {fileID: 4727881484672851877}
   m_Layer: 0
   m_Name: VRPistol
   m_TagString: Untagged
@@ -292,6 +294,51 @@ MonoBehaviour:
   hitLayers:
     serializedVersion: 2
     m_Bits: 87
+--- !u!114 &2799838097078640918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 265816909474137945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f008e6e4a29d7141b3d1667d081e258, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  laserEnabled: 1
+  laserMaxDistance: 50
+  laserColor: {r: 1, g: 0, b: 0, a: 1}
+  laserWidth: 0.005
+  muzzle: {fileID: 0}
+  lineRenderer: {fileID: 0}
+  laserDot: {fileID: 0}
+  autoCreateComponents: 1
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &4727881484672851877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 265816909474137945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 562f401bdf6cef04e8cf438386ea01b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attachPoint: {fileID: 0}
+  autoCreateAttachPoint: 1
+  attachPointLocalPosition: {x: 0, y: -0.05, z: -0.1}
+  attachPointLocalRotation: {x: 0, y: 0, z: 0}
+  distanceFromController: 0.05
+  useDynamicAttach: 0
+  throwOnDetach: 0
+  snapToColliderDistance: 0.3
+  showGizmos: 1
+  gizmoColor: {r: 0, g: 1, b: 1, a: 1}
 --- !u!1 &1448084638505195231
 GameObject:
   m_ObjectHideFlags: 0
@@ -317,7 +364,7 @@ Transform:
   m_GameObject: {fileID: 1448084638505195231}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.15}
+  m_LocalPosition: {x: -0.0114, y: -0.0363, z: 0.24}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1632,7 +1679,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &3366122774540200989
 Transform:
   m_ObjectHideFlags: 0
@@ -1928,7 +1975,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &3366122774540301719
 Transform:
   m_ObjectHideFlags: 0

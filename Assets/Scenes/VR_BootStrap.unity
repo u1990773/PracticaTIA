@@ -1654,6 +1654,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ae73f7ee504b0b418d5cf418cd3141d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  disableLegacyInteraction: 1
+  hideLegacyPrompts: 1
+  interactionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  throwOnDetach: 0
+  smoothingAmount: 5
+  useDynamicAttach: 1
+  logSetup: 1
 --- !u!4 &689436340
 Transform:
   m_ObjectHideFlags: 0
@@ -1858,6 +1867,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1069168278}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1069168290}
     - targetCorrespondingSourceObject: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0,
         type: 3}
       insertIndex: -1
@@ -2021,6 +2034,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0cb9aa70a22847b5925ee5f067c10a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1069168290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1069168277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e963fc8f071ba594a813c891b148d559, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoAddCharacterController: 1
+  controllerHeight: 0.9
+  controllerRadius: 0.3
+  centerOffset: {x: 0, y: 0.9, z: 0}
+  applyGravity: 1
+  gravity: -9.81
+  stickToGround: 1
+  groundCheckDistance: 0.1
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1095594537
 GameObject:
   m_ObjectHideFlags: 0
@@ -2725,6 +2761,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1832f6c31167aed409e01d6f04051729, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  noteUICanvas: {fileID: 0}
+  notePanelGroup: {fileID: 0}
+  noteBodyTMP: {fileID: 0}
+  hintTMP: {fileID: 0}
+  noteRawImage: {fileID: 0}
+  journalPanelGroup: {fileID: 0}
+  journalTMP: {fileID: 0}
+  fadeDuration: 0.3
+  confirmHint: Press A/Trigger to collect
+  closeHint: Press B/Grip to close
+  journalHint: Press Y to open journal
+  confirmAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: 8fc81a7b-8152-4310-92ea-113daa2f7cf0
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  closeAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: fab605ea-e461-4c2c-9edc-330b311c3df5
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
+  toggleJournalAction:
+    m_UseReference: 0
+    m_Action:
+      m_Name: 
+      m_Type: 0
+      m_ExpectedControlType: 
+      m_Id: b7680c00-56f7-4ac0-a823-bda3bf1c85e3
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+    m_Reference: {fileID: 0}
 --- !u!1 &2112107928
 GameObject:
   m_ObjectHideFlags: 0
@@ -2827,11 +2910,6 @@ PrefabInstance:
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 1095594538}
-    - target: {fileID: 3366122774540526029, guid: 1569ed3550602dd4fb3ec85da33a5a66,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3366122774540528985, guid: 1569ed3550602dd4fb3ec85da33a5a66,
         type: 3}
       propertyPath: m_IsActive
@@ -2841,6 +2919,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5949536937067221685, guid: 1569ed3550602dd4fb3ec85da33a5a66,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.0114
+      objectReference: {fileID: 0}
+    - target: {fileID: 5949536937067221685, guid: 1569ed3550602dd4fb3ec85da33a5a66,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.0363
+      objectReference: {fileID: 0}
+    - target: {fileID: 5949536937067221685, guid: 1569ed3550602dd4fb3ec85da33a5a66,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.24
       objectReference: {fileID: 0}
     - target: {fileID: 7501299085153503238, guid: 1569ed3550602dd4fb3ec85da33a5a66,
         type: 3}
