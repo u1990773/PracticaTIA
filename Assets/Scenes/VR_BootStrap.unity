@@ -2827,6 +2827,21 @@ PrefabInstance:
       propertyPath: m_InteractionManager
       value: 
       objectReference: {fileID: 1095594538}
+    - target: {fileID: 3366122774540526029, guid: 1569ed3550602dd4fb3ec85da33a5a66,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3366122774540528985, guid: 1569ed3550602dd4fb3ec85da33a5a66,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3366122774540535679, guid: 1569ed3550602dd4fb3ec85da33a5a66,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7501299085153503238, guid: 1569ed3550602dd4fb3ec85da33a5a66,
         type: 3}
       propertyPath: m_LocalPosition.x

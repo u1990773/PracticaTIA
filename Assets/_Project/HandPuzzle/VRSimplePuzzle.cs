@@ -3,19 +3,20 @@ using UnityEngine.Events;
 using System.Collections.Generic;
 
 /// <summary>
-/// Minijuego de puzzle que requiere hand tracking.
-/// Ejemplo: tocar 3 orbes en secuencia con las manos para desbloquear.
+/// Puzzle simple: tocar 3 botones en secuencia correcta.
+/// Adaptado para funcionar con XR Device Simulator.
 /// </summary>
-public class VRHandPuzzle : MonoBehaviour
+public class VRSimplePuzzle : MonoBehaviour
 {
     [Header("Puzzle Configuration")]
-    [SerializeField] private List<VRHandTouchTarget> touchTargets = new List<VRHandTouchTarget>();
+    [SerializeField] private List<VRPuzzleButton> buttons = new List<VRPuzzleButton>();
     [SerializeField] private bool requireSequentialOrder = true;
     [SerializeField] private float resetTimeAfterMistake = 2f;
 
-    [Header("Events")]
+    [Header("Completion")]
     [SerializeField] private UnityEvent onPuzzleCompleted;
     [SerializeField] private UnityEvent onPuzzleReset;
+    [SerializeField] private GameObject completionReward; // Objeto que se activa al completar
 
     [Header("Feedback")]
     [SerializeField] private AudioClip successSound;
@@ -26,23 +27,29 @@ public class VRHandPuzzle : MonoBehaviour
     [Header("Visual")]
     [SerializeField] private GameObject completionEffect;
 
-    private int currentTargetIndex = 0;
+    [Header("Testing (Device Simulator)")]
+    [SerializeField] private bool enableKeyboardShortcuts = true;
+    [SerializeField] private KeyCode[] buttonKeys = { KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3 };
+
+    // Estado
+    private int currentButtonIndex = 0;
     private bool isPuzzleCompleted = false;
     private bool isResetting = false;
 
     private void Start()
     {
-        // Auto-find targets si no están asignados
-        if (touchTargets.Count == 0)
+        // Auto-find buttons si no están asignados
+        if (buttons.Count == 0)
         {
-            touchTargets.AddRange(GetComponentsInChildren<VRHandTouchTarget>());
+            buttons.AddRange(GetComponentsInChildren<VRPuzzleButton>());
         }
 
-        // Setup callbacks para cada target
-        for (int i = 0; i < touchTargets.Count; i++)
+        // Setup callbacks para cada botón
+        for (int i = 0; i < buttons.Count; i++)
         {
             int index = i; // Captura para closure
-            touchTargets[i].onTouched.AddListener(() => OnTargetTouched(index));
+            buttons[i].SetButtonIndex(index + 1);
+            buttons[i].onButtonPressed.AddListener(() => OnButtonPressed(index));
         }
 
         if (audioSource == null)
@@ -50,10 +57,25 @@ public class VRHandPuzzle : MonoBehaviour
 
         ResetPuzzle();
 
-        Debug.Log($"[VRHandPuzzle] Puzzle inicializado con {touchTargets.Count} targets.");
+        Debug.Log($"[VRSimplePuzzle] Puzzle inicializado con {buttons.Count} botones.");
     }
 
-    private void OnTargetTouched(int targetIndex)
+    private void Update()
+    {
+        // Shortcuts de teclado para testing sin VR
+        if (enableKeyboardShortcuts && !isPuzzleCompleted)
+        {
+            for (int i = 0; i < Mathf.Min(buttonKeys.Length, buttons.Count); i++)
+            {
+                if (Input.GetKeyDown(buttonKeys[i]))
+                {
+                    buttons[i].SimulatePress();
+                }
+            }
+        }
+    }
+
+    private void OnButtonPressed(int buttonIndex)
     {
         if (isPuzzleCompleted || isResetting)
             return;
@@ -61,11 +83,11 @@ public class VRHandPuzzle : MonoBehaviour
         if (requireSequentialOrder)
         {
             // Debe tocar en orden
-            if (targetIndex == currentTargetIndex)
+            if (buttonIndex == currentButtonIndex)
             {
-                // Correcto!
-                touchTargets[targetIndex].SetCompleted(true);
-                currentTargetIndex++;
+                // ¡Correcto!
+                buttons[buttonIndex].SetState(VRPuzzleButton.ButtonState.Completed);
+                currentButtonIndex++;
 
                 PlaySound(progressSound);
 
@@ -73,10 +95,10 @@ public class VRHandPuzzle : MonoBehaviour
                 if (VRHapticsManager.Instance != null)
                     VRHapticsManager.Instance.SendMediumBumpBoth();
 
-                Debug.Log($"[VRHandPuzzle] Target {targetIndex} correcto. Progreso: {currentTargetIndex}/{touchTargets.Count}");
+                Debug.Log($"[VRSimplePuzzle] Botón {buttonIndex + 1} correcto. Progreso: {currentButtonIndex}/{buttons.Count}");
 
                 // Check si completó todo
-                if (currentTargetIndex >= touchTargets.Count)
+                if (currentButtonIndex >= buttons.Count)
                 {
                     CompletePuzzle();
                 }
@@ -84,14 +106,16 @@ public class VRHandPuzzle : MonoBehaviour
             else
             {
                 // Error! Tocó fuera de orden
-                Debug.LogWarning($"[VRHandPuzzle] Error! Tocó target {targetIndex} pero esperaba {currentTargetIndex}");
+                Debug.LogWarning($"[VRSimplePuzzle] Error! Tocó botón {buttonIndex + 1} pero esperaba {currentButtonIndex + 1}");
                 PlaySound(errorSound);
 
                 // Haptic error
                 if (VRHapticsManager.Instance != null)
+                {
                     VRHapticsManager.Instance.SendHapticPulse(
                         VRHapticsManager.Instance.GetLeftController(), 2, 0.8f, 0.1f, 0.1f
                     );
+                }
 
                 StartCoroutine(ResetAfterDelay());
             }
@@ -99,14 +123,14 @@ public class VRHandPuzzle : MonoBehaviour
         else
         {
             // Cualquier orden es válido
-            if (!touchTargets[targetIndex].IsCompleted())
+            if (buttons[buttonIndex].GetState() != VRPuzzleButton.ButtonState.Completed)
             {
-                touchTargets[targetIndex].SetCompleted(true);
-                currentTargetIndex++;
+                buttons[buttonIndex].SetState(VRPuzzleButton.ButtonState.Completed);
+                currentButtonIndex++;
 
                 PlaySound(progressSound);
 
-                if (currentTargetIndex >= touchTargets.Count)
+                if (currentButtonIndex >= buttons.Count)
                 {
                     CompletePuzzle();
                 }
@@ -118,7 +142,7 @@ public class VRHandPuzzle : MonoBehaviour
     {
         isPuzzleCompleted = true;
 
-        Debug.Log("[VRHandPuzzle] ¡Puzzle completado!");
+        Debug.Log("[VRSimplePuzzle] ¡Puzzle completado!");
 
         PlaySound(successSound);
 
@@ -126,6 +150,12 @@ public class VRHandPuzzle : MonoBehaviour
         if (completionEffect != null)
         {
             completionEffect.SetActive(true);
+        }
+
+        // Activar recompensa
+        if (completionReward != null)
+        {
+            completionReward.SetActive(true);
         }
 
         // Haptic celebración
@@ -145,13 +175,13 @@ public class VRHandPuzzle : MonoBehaviour
 
     public void ResetPuzzle()
     {
-        currentTargetIndex = 0;
+        currentButtonIndex = 0;
         isPuzzleCompleted = false;
         isResetting = false;
 
-        foreach (var target in touchTargets)
+        foreach (var button in buttons)
         {
-            target.SetCompleted(false);
+            button.SetState(VRPuzzleButton.ButtonState.Idle);
         }
 
         if (completionEffect != null)
@@ -159,9 +189,14 @@ public class VRHandPuzzle : MonoBehaviour
             completionEffect.SetActive(false);
         }
 
+        if (completionReward != null)
+        {
+            completionReward.SetActive(false);
+        }
+
         onPuzzleReset?.Invoke();
 
-        Debug.Log("[VRHandPuzzle] Puzzle reseteado.");
+        Debug.Log("[VRSimplePuzzle] Puzzle reseteado.");
     }
 
     private System.Collections.IEnumerator ResetAfterDelay()
@@ -177,5 +212,21 @@ public class VRHandPuzzle : MonoBehaviour
         {
             audioSource.PlayOneShot(clip);
         }
+    }
+
+    /// <summary>
+    /// Obtiene el progreso actual (0-1).
+    /// </summary>
+    public float GetProgress()
+    {
+        return (float)currentButtonIndex / buttons.Count;
+    }
+
+    /// <summary>
+    /// Verifica si el puzzle está completado.
+    /// </summary>
+    public bool IsCompleted()
+    {
+        return isPuzzleCompleted;
     }
 }
