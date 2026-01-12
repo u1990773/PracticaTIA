@@ -5,7 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 /// Componente para objetos grabbables que aplican una pose específica al ser agarrados.
 /// Ejemplo: pistola usa "grip pose", linterna usa "flashlight pose".
 /// </summary>
-[RequireComponent(typeof(XRGrabInteractable))]
+[RequireComponent(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable))]
 public class VRGrabbableWithPose : MonoBehaviour
 {
     [Header("Pose Settings")]
@@ -17,11 +17,11 @@ public class VRGrabbableWithPose : MonoBehaviour
     [SerializeField] private bool autoFindPoseSystem = true;
     [SerializeField] private VRHandPoseSystem poseSystem;
 
-    private XRGrabInteractable grabInteractable;
+    private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
 
     private void Awake()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
+        grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
 
         if (autoFindPoseSystem && poseSystem == null)
         {
@@ -94,9 +94,9 @@ public class VRGrabbableWithPose : MonoBehaviour
 
     #region Helper Methods
 
-    private bool IsLeftHand(IXRSelectInteractor interactor)
+    private bool IsLeftHand(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor)
     {
-        if (interactor is XRBaseControllerInteractor controllerInteractor)
+        if (interactor is UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInputInteractor controllerInteractor)
         {
             string name = controllerInteractor.name.ToLower();
             return name.Contains("left");
@@ -104,9 +104,9 @@ public class VRGrabbableWithPose : MonoBehaviour
         return false;
     }
 
-    private ActionBasedController GetControllerFromInteractor(IXRSelectInteractor interactor)
+    private ActionBasedController GetControllerFromInteractor(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor)
     {
-        if (interactor is XRBaseControllerInteractor controllerInteractor)
+        if (interactor is UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInputInteractor controllerInteractor)
         {
             return controllerInteractor.GetComponent<ActionBasedController>();
         }

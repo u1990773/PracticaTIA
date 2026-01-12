@@ -59,8 +59,21 @@ public class VRBootstrapLoader : MonoBehaviour
         // 4) Posicionar el XR rig en el spawn del Player legacy
         if (legacyPlayer != null && xrOrigin != null)
         {
-            xrOrigin.transform.position = legacyPlayer.transform.position;
+            xrOrigin.transform.position =
+                new Vector3(
+                    legacyPlayer.transform.position.x,
+                    xrOrigin.transform.position.y,
+                    legacyPlayer.transform.position.z
+                );
+
             xrOrigin.transform.rotation = Quaternion.Euler(0f, legacyPlayer.transform.eulerAngles.y, 0f);
+
+            var vrMove = xrOrigin.GetComponent<VRMovementFix>();
+            if (vrMove != null)
+            {
+                vrMove.EnableMovement();
+            }
+
 
             // ⭐ ARREGLO CRÍTICO: Desactivar COMPLETAMENTE el sistema de movimiento legacy
             if (setLegacyPlayerVrMode)

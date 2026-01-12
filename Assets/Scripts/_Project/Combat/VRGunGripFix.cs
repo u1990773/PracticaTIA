@@ -9,7 +9,7 @@ using System.Collections;
 /// 
 /// REEMPLAZA completamente tu VRGunGripFix.cs actual.
 /// </summary>
-[RequireComponent(typeof(XRGrabInteractable))]
+[RequireComponent(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable))]
 public class VRGunGripFix : MonoBehaviour
 {
     [Header("⭐ MODO TOGGLE FORZADO (Re-Grab V2)")]
@@ -35,8 +35,8 @@ public class VRGunGripFix : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showDebugLogs = true;
 
-    private XRGrabInteractable grabInteractable;
-    private IXRSelectInteractor lastInteractor;
+    private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
+    private UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor lastInteractor;
     private bool isManuallyGrabbed = false;
     private bool allowRelease = false;
     private bool isReGrabbing = false;
@@ -49,7 +49,7 @@ public class VRGunGripFix : MonoBehaviour
 
     private void Start()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
+        grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
 
         if (grabInteractable == null)
         {
@@ -135,8 +135,8 @@ public class VRGunGripFix : MonoBehaviour
     private void ConfigureGrabInteractable()
     {
         grabInteractable.attachTransform = attachPoint;
-        grabInteractable.selectMode = InteractableSelectMode.Single;
-        grabInteractable.movementType = XRBaseInteractable.MovementType.Instantaneous;
+        grabInteractable.selectMode = UnityEngine.XR.Interaction.Toolkit.Interactables.InteractableSelectMode.Single;
+        grabInteractable.movementType = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable.MovementType.Instantaneous;
         grabInteractable.trackPosition = true;
         grabInteractable.trackRotation = true;
         grabInteractable.attachEaseInTime = 0.05f;
@@ -195,7 +195,7 @@ public class VRGunGripFix : MonoBehaviour
         }
     }
 
-    private IEnumerator ReGrabAfterFrame(IXRSelectInteractor interactor)
+    private IEnumerator ReGrabAfterFrame(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor)
     {
         yield return null;
 

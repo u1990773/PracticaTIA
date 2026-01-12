@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 /// Compatible con sistema legacy de daño (busca zombies, etc).
 /// VERSIÓN ARREGLADA: Funciona con Device Simulator (click/teclado)
 /// </summary>
-[RequireComponent(typeof(XRGrabInteractable))]
+[RequireComponent(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable))]
 public class VRGunWeapon : MonoBehaviour
 {
     [Header("Gun Stats")]
@@ -39,7 +39,7 @@ public class VRGunWeapon : MonoBehaviour
     [SerializeField] private LayerMask hitLayers = ~0; // Todo por defecto
 
     // Estado
-    private XRGrabInteractable grabInteractable;
+    private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
     private ActionBasedController currentController;
     private float lastFireTime;
     private bool isReloading = false;
@@ -47,7 +47,7 @@ public class VRGunWeapon : MonoBehaviour
 
     private void Awake()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
+        grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
 
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
@@ -140,7 +140,7 @@ public class VRGunWeapon : MonoBehaviour
         isGrabbed = true; // CRÍTICO: Marcar como agarrada
 
         // Obtener el controlador que agarró el arma
-        if (args.interactorObject is XRBaseControllerInteractor controllerInteractor)
+        if (args.interactorObject is UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInputInteractor controllerInteractor)
         {
             currentController = controllerInteractor.GetComponent<ActionBasedController>();
         }

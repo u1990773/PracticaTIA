@@ -81,9 +81,9 @@ public class VRHapticsManager : MonoBehaviour
     /// <summary>
     /// Envía vibración según el interactor que agarró un objeto.
     /// </summary>
-    public void SendHapticFromInteractor(IXRSelectInteractor interactor, float intensity, float duration)
+    public void SendHapticFromInteractor(UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor interactor, float intensity, float duration)
     {
-        if (interactor is XRBaseControllerInteractor controllerInteractor)
+        if (interactor is UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInputInteractor controllerInteractor)
         {
             var controller = controllerInteractor.GetComponent<ActionBasedController>();
             SendHaptic(controller, intensity, duration);

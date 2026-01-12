@@ -71,10 +71,10 @@ public class VRNoteSimpleCollect : MonoBehaviour
 
     private void SetupGrabInteraction()
     {
-        XRGrabInteractable grab = GetComponent<XRGrabInteractable>();
+        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
         if (grab == null)
         {
-            grab = gameObject.AddComponent<XRGrabInteractable>();
+            grab = gameObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             grab.throwOnDetach = false;
         }
 

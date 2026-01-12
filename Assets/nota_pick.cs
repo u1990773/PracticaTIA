@@ -15,7 +15,7 @@ public class Nota : MonoBehaviour
     private PlayerMovementQ jugador;
     private bool alreadyCollected = false;
 
-    private XRGrabInteractable grabInteractable;
+    private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
 
     void Start()
     {
@@ -35,10 +35,10 @@ public class Nota : MonoBehaviour
 
     private void SetupVRGrab()
     {
-        XRGrabInteractable grab = GetComponent<XRGrabInteractable>();
+        UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
         if (grab == null)
         {
-            grab = gameObject.AddComponent<XRGrabInteractable>();
+            grab = gameObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             grab.throwOnDetach = false;
         }
 

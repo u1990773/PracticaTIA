@@ -45,6 +45,7 @@ public class VRMovementFix : MonoBehaviour
     private float timeInAir = 0f;
     private float lastGroundCheckTime;
     private const float GROUND_CHECK_INTERVAL = 0.05f; // Check cada 0.05s en vez de cada frame
+    private bool movementEnabled = false;
 
     private void Start()
     {
@@ -83,16 +84,23 @@ public class VRMovementFix : MonoBehaviour
 
     private void Update()
     {
+        if (!movementEnabled) return;
+
         if (characterController == null) return;
 
         HandleGravity();
 
-        // Ground check con intervalo para optimizar
-        if (Time.time - lastGroundCheckTime >= GROUND_CHECK_INTERVAL)
+        if (Time.time - lastGroundCheckTime < GROUND_CHECK_INTERVAL)
         {
-            HandleGrounding();
-            lastGroundCheckTime = Time.time;
+            return;
         }
+        HandleGrounding();
+        lastGroundCheckTime = Time.time;
+    }
+
+    public void EnableMovement()
+    {
+        movementEnabled = true;
     }
 
     private void HandleGravity()
