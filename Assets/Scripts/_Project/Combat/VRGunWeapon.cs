@@ -36,14 +36,17 @@ public class VRGunWeapon : MonoBehaviour
     [SerializeField] private GameObject impactEffectPrefab;
 
     [Header("Layers")]
-    [SerializeField] private LayerMask hitLayers = ~0; // Todo por defecto
+    [SerializeField] private LayerMask hitLayers = ~0; 
 
     // Estado
     private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
     private ActionBasedController currentController;
     private float lastFireTime;
     private bool isReloading = false;
-    private bool isGrabbed = false; // NUEVO: flag para saber si está agarrada
+    private bool isGrabbed = false; 
+    private InputAction controllerActivateAction;
+    private InputAction controllerUIOrPrimaryAction; 
+
 
     private void Awake()
     {
@@ -88,78 +91,74 @@ public class VRGunWeapon : MonoBehaviour
 
     private void Update()
     {
-        // IMPORTANTE: Solo procesar input si el arma está agarrada
         if (!isGrabbed || isReloading) return;
 
         bool shootPressed = false;
         bool reloadPressed = false;
 
-        // Input VR (Trigger) - si hay controller y action configurada
-        if (fireAction.action != null && fireAction.action.IsPressed())
-        {
+        // DISPARO: usar el activate del controller que sujeta el arma
+        if (controllerActivateAction != null && controllerActivateAction.IsPressed())
             shootPressed = true;
-        }
 
-        if (reloadAction.action != null && reloadAction.action.WasPressedThisFrame())
-        {
+        // RECARGA: usar uiPressAction como botón (si está configurado en XRI)
+        if (controllerUIOrPrimaryAction != null && controllerUIOrPrimaryAction.WasPressedThisFrame())
             reloadPressed = true;
-        }
 
-        // FALLBACK EDITOR: Click izquierdo = disparar, R = recargar
-        // Solo si el arma ESTÁ agarrada
-#if UNITY_EDITOR
-        if (Input.GetMouseButton(0))
-        {
+        // Fallback: tus acciones asignadas en inspector
+        if (!shootPressed && fireAction.action != null && fireAction.action.IsPressed())
             shootPressed = true;
-        }
 
-        if (Input.GetKeyDown(KeyCode.R))
-        {
+        if (!reloadPressed && reloadAction.action != null && reloadAction.action.WasPressedThisFrame())
             reloadPressed = true;
-        }
-#endif
 
-        // Disparar con fire rate
+    #if UNITY_EDITOR
+        if (Input.GetMouseButton(0)) shootPressed = true;
+        if (Input.GetKeyDown(KeyCode.R)) reloadPressed = true;
+    #endif
+
         if (shootPressed && Time.time - lastFireTime >= fireRate)
         {
             Fire();
             lastFireTime = Time.time;
         }
 
-        // Recargar
         if (reloadPressed)
-        {
             StartReload();
-        }
     }
+
 
     #region Grab/Release
 
     private void OnGrabbed(SelectEnterEventArgs args)
     {
-        isGrabbed = true; // CRÍTICO: Marcar como agarrada
+        isGrabbed = true;
 
-        // Obtener el controlador que agarró el arma
         if (args.interactorObject is UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInputInteractor controllerInteractor)
         {
             currentController = controllerInteractor.GetComponent<ActionBasedController>();
         }
 
-        // Haptic feedback al agarrar
-        if (VRHapticsManager.Instance != null && currentController != null)
-        {
-            VRHapticsManager.Instance.SendLightTap(currentController);
-        }
+        // NUEVO: capturar acciones del controlador que realmente está agarrando
+        controllerActivateAction = currentController != null ? currentController.activateAction.action : null;
+        // Opción 1 para recarga: usar UI Press o Select, según vuestro layout
+        controllerUIOrPrimaryAction = currentController != null ? currentController.uiPressAction.action : null;
 
-        Debug.Log("[VRGunWeapon] Arma agarrada - Listo para disparar");
+        controllerActivateAction?.Enable();
+        controllerUIOrPrimaryAction?.Enable();
+
+        if (VRHapticsManager.Instance != null && currentController != null)
+            VRHapticsManager.Instance.SendLightTap(currentController);
     }
+
 
     private void OnReleased(SelectExitEventArgs args)
     {
-        isGrabbed = false; // CRÍTICO: Marcar como soltada
+        isGrabbed = false;
+        controllerActivateAction = null;
+        controllerUIOrPrimaryAction = null;
         currentController = null;
-        Debug.Log("[VRGunWeapon] Arma soltada");
     }
+
 
     #endregion
 

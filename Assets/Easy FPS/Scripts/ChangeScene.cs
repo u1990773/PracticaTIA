@@ -6,7 +6,7 @@ public class ChangeScene : MonoBehaviour
     public void PlayGame()
     {
         Debug.Log("Cargando escena Main...");
-        SceneManager.LoadScene("Main"); 
+        SceneManager.LoadScene("VR_BootStrap"); 
     }
 
     public void QuitGame()
