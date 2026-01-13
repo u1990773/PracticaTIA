@@ -240,83 +240,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!1 &272081920
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 272081922}
-  - component: {fileID: 272081921}
-  m_Layer: 0
-  m_Name: VRHUDAdapter
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &272081921
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 272081920}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80076af2ea8569547859c87a59ec7651, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  autoFindLegacyCanvas: 1
-  legacyCanvasName: HUDCanvas
-  targetCanvas: {fileID: 0}
-  distanceFromCamera: 2
-  heightOffset: -0.5
-  hudScale: 0.002
-  followCamera: 1
-  followSpeed: 5
-  lockYRotation: 1
-  vrCamera: {fileID: 0}
-  healthText: {fileID: 0}
-  ammoText: {fileID: 0}
-  waveText: {fileID: 0}
-  notesText: {fileID: 0}
-  updateInterval: 0.1
---- !u!4 &272081922
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 272081920}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.36144, z: 0.8}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &316738049 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 265816909474137945, guid: 1569ed3550602dd4fb3ec85da33a5a66,
-    type: 3}
-  m_PrefabInstance: {fileID: 610249616171409013}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &316738057
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 316738049}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d22e5759bd36dc645bdfcd3b0fc22758, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &622296624
 GameObject:
   m_ObjectHideFlags: 0
@@ -378,6 +301,12 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!20 &927850471 stripped
+Camera:
+  m_CorrespondingSourceObject: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0,
+    type: 3}
+  m_PrefabInstance: {fileID: 1484710141}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1024585736
 GameObject:
   m_ObjectHideFlags: 0
@@ -487,6 +416,27 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_BackGroundColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_BackGroundColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_BackGroundColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1767192439, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+      propertyPath: m_BackGroundColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 153982007679157697, guid: f6336ac4ac8b4d34bc5072418cdc62a0,
+        type: 3}
+      propertyPath: m_MoveSpeed
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 1178791450436251564, guid: f6336ac4ac8b4d34bc5072418cdc62a0,
         type: 3}
       propertyPath: m_CameraYOffset
@@ -579,6 +529,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1798126213}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1798126214}
+    - targetCorrespondingSourceObject: {fileID: 1717954561962503725, guid: f6336ac4ac8b4d34bc5072418cdc62a0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1798126220}
   m_SourcePrefab: {fileID: 100100000, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
 --- !u!1 &1484710142 stripped
 GameObject:
@@ -653,6 +611,65 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: caff514de9b15ad48ab85dcff5508221, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1495490356
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1495490358}
+  - component: {fileID: 1495490357}
+  m_Layer: 0
+  m_Name: Adapter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1495490357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495490356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80076af2ea8569547859c87a59ec7651, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoFindLegacyCanvas: 1
+  legacyCanvasName: HUDCanvas
+  targetCanvas: {fileID: 0}
+  distanceFromCamera: 2
+  heightOffset: -0.5
+  hudScale: 0.001
+  followCamera: 1
+  followSpeed: 5
+  lockYRotation: 0
+  vrCamera: {fileID: 927850471}
+  healthText: {fileID: 0}
+  ammoText: {fileID: 0}
+  waveText: {fileID: 0}
+  notesText: {fileID: 0}
+  updateInterval: 0.1
+--- !u!4 &1495490358
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1495490356}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6.813718, y: -3.9324863, z: -1.1811229}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1738820734
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,6 +752,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_ActionAssets:
   - {fileID: -944628639613478452, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+--- !u!114 &1798126214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484710142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9053f94fa6213784a994c1edad87d46c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  currentHealth: 100
+  syncWithLegacyPlayer: 1
+  legacyPlayerTag: Player
+  useHapticOnDamage: 1
+  hapticIntensity: 0.8
+  hapticDuration: 0.2
+  gameOverSceneName: GameOver
+  delayBeforeGameOver: 2
+--- !u!114 &1798126220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484710142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22ff34cf9f7d70e4280c09b53a9a1171, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &610249616171409013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -837,11 +887,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 265816909474137945, guid: 1569ed3550602dd4fb3ec85da33a5a66,
-        type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 316738057}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1569ed3550602dd4fb3ec85da33a5a66, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -851,7 +897,7 @@ SceneRoots:
   - {fileID: 1095594539}
   - {fileID: 1024585738}
   - {fileID: 1484710141}
-  - {fileID: 272081922}
   - {fileID: 1738820737}
   - {fileID: 622296626}
   - {fileID: 610249616171409013}
+  - {fileID: 1495490358}

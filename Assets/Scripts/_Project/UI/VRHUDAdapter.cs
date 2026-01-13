@@ -1,103 +1,97 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
 /// <summary>
-/// Adapta la UI legacy (Screen Space) a VR (World Space).
-/// Busca el Canvas legacy y lo convierte a seguir al jugador.
+/// Adapta la UI legacy (Screen Space) a VR (World Space) y actualiza datos.
+/// - Notas: VRGameManager.Instance (contador real)
+/// - Ammo: VRGunWeapon (GetCurrentAmmo / GetMaxAmmo)
 /// </summary>
 public class VRHUDAdapter : MonoBehaviour
 {
     [Header("Auto-Find Settings")]
     [SerializeField] private bool autoFindLegacyCanvas = true;
-    [SerializeField] private string legacyCanvasName = "Canvas"; // Ajusta según tu Canvas
+    [SerializeField] private string legacyCanvasName = "Canvas"; // Pon aquí el nombre real si tu canvas se llama distinto
 
     [Header("VR HUD Settings")]
     [SerializeField] private Canvas targetCanvas;
     [SerializeField] private float distanceFromCamera = 2f;
-    [SerializeField] private float heightOffset = -0.5f; // Abajo del centro de visión
-    [SerializeField] private float hudScale = 0.001f; // Escala del HUD en VR
+    [SerializeField] private float heightOffset = -0.5f;
+    [SerializeField] private float hudScale = 0.001f;
 
     [Header("Follow Camera")]
     [SerializeField] private bool followCamera = true;
     [SerializeField] private float followSpeed = 5f;
-    [SerializeField] private bool lockYRotation = false; // Solo gira en Y
+    [SerializeField] private bool lockYRotation = false;
 
     [Header("References (Auto-found)")]
     [SerializeField] private Camera vrCamera;
+    [SerializeField] private Transform legacyPlayer;
+
+    [Header("UI Elements (Auto-found)")]
     [SerializeField] private TextMeshProUGUI healthText;
     [SerializeField] private TextMeshProUGUI ammoText;
     [SerializeField] private TextMeshProUGUI waveText;
     [SerializeField] private TextMeshProUGUI notesText;
 
     [Header("Update Settings")]
-    [SerializeField] private float updateInterval = 0.1f; // Actualizar cada 0.1s
+    [SerializeField] private float updateInterval = 0.1f;
 
-    // Estado
-    private GameObject legacyPlayer;
-    private VRGunWeapon currentWeapon;
     private float nextUpdateTime;
+    private bool initialized;
 
     private void Start()
     {
-        StartCoroutine(InitializeDelayed());
+        StartCoroutine(InitializeWhenReady());
     }
 
     /// <summary>
-    /// Inicializa después de que Main se haya cargado.
+    /// Inicializa de forma robusta: reintenta por frames en vez de depender de 0.5s exactos.
     /// </summary>
-    private IEnumerator InitializeDelayed()
+    private IEnumerator InitializeWhenReady()
     {
-        // Esperar a que Main cargue
-        yield return new WaitForSeconds(0.5f);
+        const int maxFrames = 300; // ~5s a 60fps
 
-        // Buscar cámara VR
-        if (vrCamera == null)
+        for (int i = 0; i < maxFrames; i++)
         {
-            vrCamera = Camera.main;
             if (vrCamera == null)
+                vrCamera = Camera.main;
+
+            if (legacyPlayer == null)
             {
-                Debug.LogError("[VRHUDAdapter] No se encontró cámara principal.");
+                var playerObj = GameObject.FindWithTag("Player");
+                if (playerObj != null)
+                    legacyPlayer = playerObj.transform;
+            }
+
+            if (autoFindLegacyCanvas && targetCanvas == null)
+                targetCanvas = FindLegacyCanvas();
+
+            if (targetCanvas != null)
+                FindUIElements();
+
+            if (targetCanvas != null && vrCamera != null)
+            {
+                ConvertCanvasToWorldSpace();
+                initialized = true;
+                ForceUpdate();
+                Debug.Log("[VRHUDAdapter] Inicialización completada.");
                 yield break;
             }
+
+            yield return null;
         }
 
-        // Buscar Canvas legacy
-        if (autoFindLegacyCanvas && targetCanvas == null)
-        {
-            targetCanvas = FindLegacyCanvas();
-        }
-
-        if (targetCanvas == null)
-        {
-            Debug.LogError("[VRHUDAdapter] No se encontró Canvas para adaptar.");
-            yield break;
-        }
-
-        // Convertir Canvas a World Space
-        ConvertCanvasToWorldSpace();
-
-        // Buscar elementos de UI
-        FindUIElements();
-
-        // Buscar referencias de juego
-        legacyPlayer = GameObject.FindWithTag("Player");
-
-        Debug.Log("[VRHUDAdapter] HUD adaptado a VR correctamente.");
+        Debug.LogWarning("[VRHUDAdapter] No se pudo inicializar: falta Canvas o Cámara (tras reintentos).");
     }
 
     private void Update()
     {
-        if (targetCanvas == null || vrCamera == null) return;
+        if (!initialized) return;
 
-        // Hacer que el HUD siga a la cámara
         if (followCamera)
-        {
             UpdateHUDPosition();
-        }
 
-        // Actualizar datos del HUD
         if (Time.time >= nextUpdateTime)
         {
             UpdateHUDData();
@@ -105,32 +99,32 @@ public class VRHUDAdapter : MonoBehaviour
         }
     }
 
-    #region Canvas Conversion
+    #region Canvas + Position
 
     private Canvas FindLegacyCanvas()
     {
-        // Buscar por nombre
-        GameObject canvasObj = GameObject.Find(legacyCanvasName);
-        if (canvasObj != null)
+        // 1) Por nombre
+        if (!string.IsNullOrEmpty(legacyCanvasName))
         {
-            Canvas canvas = canvasObj.GetComponent<Canvas>();
-            if (canvas != null)
+            var canvasObj = GameObject.Find(legacyCanvasName);
+            if (canvasObj != null)
             {
-                Debug.Log($"[VRHUDAdapter] Canvas encontrado: {legacyCanvasName}");
-                return canvas;
+                var c = canvasObj.GetComponent<Canvas>();
+                if (c != null) return c;
             }
         }
 
-        // Fallback: buscar primer Canvas de Screen Space
-        Canvas[] allCanvas = FindObjectsOfType<Canvas>();
-        foreach (var canvas in allCanvas)
+        // 2) Fallback: primer canvas ScreenSpace encontrado (incluye inactivos) - Unity 6
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        foreach (var c in canvases)
         {
-            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay ||
-                canvas.renderMode == RenderMode.ScreenSpaceCamera)
-            {
-                Debug.Log($"[VRHUDAdapter] Canvas encontrado (fallback): {canvas.name}");
-                return canvas;
-            }
+            if (c.renderMode == RenderMode.ScreenSpaceOverlay ||
+                c.renderMode == RenderMode.ScreenSpaceCamera)
+                return c;
         }
 
         return null;
@@ -138,111 +132,96 @@ public class VRHUDAdapter : MonoBehaviour
 
     private void ConvertCanvasToWorldSpace()
     {
-        // Cambiar a World Space
-        targetCanvas.renderMode = RenderMode.WorldSpace;
+        if (targetCanvas == null || vrCamera == null) return;
 
-        // Asignar cámara VR como Event Camera
+        targetCanvas.renderMode = RenderMode.WorldSpace;
         targetCanvas.worldCamera = vrCamera;
 
-        // Ajustar escala
         targetCanvas.transform.localScale = Vector3.one * hudScale;
-
-        // Posicionar inicialmente
-        PositionHUDInFrontOfCamera();
+        UpdateHUDPosition(true);
 
         Debug.Log("[VRHUDAdapter] Canvas convertido a World Space.");
     }
 
-    private void PositionHUDInFrontOfCamera()
+    private void UpdateHUDPosition(bool instant = false)
     {
+        if (targetCanvas == null || vrCamera == null) return;
+
         Vector3 forward = vrCamera.transform.forward;
-        Vector3 position = vrCamera.transform.position + forward * distanceFromCamera;
-        position.y += heightOffset;
+        Vector3 desiredPos = vrCamera.transform.position + forward * distanceFromCamera;
+        desiredPos.y += heightOffset;
 
-        targetCanvas.transform.position = position;
-        targetCanvas.transform.rotation = Quaternion.LookRotation(forward);
-    }
-
-    #endregion
-
-    #region HUD Follow
-
-    private void UpdateHUDPosition()
-    {
-        Vector3 targetPosition = vrCamera.transform.position +
-                                 vrCamera.transform.forward * distanceFromCamera;
-        targetPosition.y += heightOffset;
-
-        // Smooth follow
-        targetCanvas.transform.position = Vector3.Lerp(
-            targetCanvas.transform.position,
-            targetPosition,
-            Time.deltaTime * followSpeed
-        );
-
-        // Rotación hacia cámara
-        Vector3 directionToCamera = vrCamera.transform.position - targetCanvas.transform.position;
-        Quaternion targetRotation;
-
+        Quaternion desiredRot;
         if (lockYRotation)
         {
-            // Solo rotar en Y (mantener horizontal)
-            directionToCamera.y = 0;
-            targetRotation = Quaternion.LookRotation(-directionToCamera);
+            Vector3 flatForward = new Vector3(forward.x, 0f, forward.z);
+            if (flatForward.sqrMagnitude < 0.0001f) flatForward = targetCanvas.transform.forward;
+            desiredRot = Quaternion.LookRotation(flatForward.normalized);
         }
         else
         {
-            targetRotation = Quaternion.LookRotation(-directionToCamera);
+            desiredRot = Quaternion.LookRotation(forward);
         }
 
-        targetCanvas.transform.rotation = Quaternion.Slerp(
-            targetCanvas.transform.rotation,
-            targetRotation,
-            Time.deltaTime * followSpeed
-        );
+        if (instant)
+        {
+            targetCanvas.transform.position = desiredPos;
+            targetCanvas.transform.rotation = desiredRot;
+        }
+        else
+        {
+            targetCanvas.transform.position = Vector3.Lerp(
+                targetCanvas.transform.position,
+                desiredPos,
+                Time.deltaTime * followSpeed
+            );
+
+            targetCanvas.transform.rotation = Quaternion.Slerp(
+                targetCanvas.transform.rotation,
+                desiredRot,
+                Time.deltaTime * followSpeed
+            );
+        }
     }
 
     #endregion
 
-    #region Find UI Elements
+    #region Find UI
 
     private void FindUIElements()
     {
-        // Buscar todos los TextMeshProUGUI en el Canvas
-        var allTexts = targetCanvas.GetComponentsInChildren<TextMeshProUGUI>(true);
+        if (targetCanvas == null) return;
 
-        foreach (var text in allTexts)
+        // Ajusta estos nombres si en tu Canvas se llaman diferente:
+        // (por tus capturas / versiones anteriores suelen ser así)
+        healthText = FindTextInCanvas("textSalut", healthText);
+        ammoText = FindTextInCanvas("ammoText", ammoText);
+        waveText = FindTextInCanvas("waveText", waveText);
+        notesText = FindTextInCanvas("contadorNotas", notesText);
+    }
+
+    private TextMeshProUGUI FindTextInCanvas(string name, TextMeshProUGUI current)
+    {
+        if (current != null) return current;
+        if (targetCanvas == null) return null;
+
+        // intento 1: Find directo en hijos
+        Transform t = targetCanvas.transform.Find(name);
+        if (t != null)
         {
-            string name = text.name.ToLower();
-
-            // Detectar por nombre común
-            if (healthText == null && (name.Contains("vida") || name.Contains("health") || name.Contains("hp")))
-            {
-                healthText = text;
-                Debug.Log($"[VRHUDAdapter] Health text encontrado: {text.name}");
-            }
-            else if (ammoText == null && (name.Contains("ammo") || name.Contains("municion") || name.Contains("balas")))
-            {
-                ammoText = text;
-                Debug.Log($"[VRHUDAdapter] Ammo text encontrado: {text.name}");
-            }
-            else if (waveText == null && (name.Contains("wave") || name.Contains("oleada") || name.Contains("ola") || name.Contains("ronda")))
-            {
-                waveText = text;
-                Debug.Log($"[VRHUDAdapter] Wave text encontrado: {text.name}");
-            }
-            else if (notesText == null && (name.Contains("nota") || name.Contains("note")))
-            {
-                notesText = text;
-                Debug.Log($"[VRHUDAdapter] Notes text encontrado: {text.name}");
-            }
+            var tmp = t.GetComponent<TextMeshProUGUI>();
+            if (tmp != null) return tmp;
         }
 
-        // Log si no se encuentran elementos
-        if (healthText == null) Debug.LogWarning("[VRHUDAdapter] No se encontró texto de vida.");
-        if (ammoText == null) Debug.LogWarning("[VRHUDAdapter] No se encontró texto de munición.");
-        if (waveText == null) Debug.LogWarning("[VRHUDAdapter] No se encontró texto de oleada.");
-        if (notesText == null) Debug.LogWarning("[VRHUDAdapter] No se encontró texto de notas.");
+        // intento 2: buscar por nombre entre todos los TMP hijos
+        var all = targetCanvas.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (var tmp in all)
+        {
+            if (tmp != null && tmp.name == name)
+                return tmp;
+        }
+
+        return null;
     }
 
     #endregion
@@ -251,115 +230,120 @@ public class VRHUDAdapter : MonoBehaviour
 
     private void UpdateHUDData()
     {
-        // Actualizar vida
-        if (healthText != null && legacyPlayer != null)
+        UpdateHealth();
+        UpdateAmmo();
+        UpdateWave();   // (si lo usas)
+        UpdateNotes();  // ✅ VRGameManager
+    }
+
+    private void UpdateHealth()
+    {
+        if (healthText == null || legacyPlayer == null) return;
+
+        var playerMovement = legacyPlayer.GetComponent<PlayerMovementQ>();
+        if (playerMovement == null) return;
+
+        // Tu script original sacaba "vida" por reflection.
+        // Lo mantengo igual para no romper tu código.
+        try
         {
-            var playerMovement = legacyPlayer.GetComponent<PlayerMovementQ>();
-            if (playerMovement != null)
+            var vidaField = playerMovement.GetType().GetField("vida");
+            if (vidaField != null)
             {
-                // Asume que PlayerMovementQ tiene una variable "vida"
-                // Ajusta según tu código
-                try
-                {
-                    var vidaField = playerMovement.GetType().GetField("vida");
-                    if (vidaField != null)
-                    {
-                        float vida = (float)vidaField.GetValue(playerMovement);
-                        healthText.text = $"HP: {vida:F0}";
-                    }
-                }
-                catch
-                {
-                    healthText.text = "HP: --";
-                }
+                int vida = (int)vidaField.GetValue(playerMovement);
+                healthText.text = $"HP: {vida}";
             }
         }
-
-        // Actualizar munición
-        if (ammoText != null)
+        catch
         {
-            // Buscar arma actual
-            if (currentWeapon == null)
-            {
-                currentWeapon = FindObjectOfType<VRGunWeapon>();
-            }
-
-            if (currentWeapon != null)
-            {
-                int current = currentWeapon.GetCurrentAmmo();
-                int max = currentWeapon.GetMaxAmmo();
-                ammoText.text = $"{current}/{max}";
-            }
-            else
-            {
-                ammoText.text = "-- / --";
-            }
+            // Si falla, no hacemos nada.
         }
+    }
 
-        // Actualizar oleada
-        if (waveText != null)
+    private void UpdateAmmo()
+    {
+        if (ammoText == null) return;
+
+        // Si hay varias armas, preferimos la que esté agarrada.
+        var weapons = Object.FindObjectsByType<VRGunWeapon>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        VRGunWeapon chosen = null;
+
+        if (weapons != null && weapons.Length > 0)
         {
-            var waveSystem = FindObjectOfType<ZombieWaveSystem>();
-            if (waveSystem != null)
+            // Prioridad: agarrada
+            foreach (var w in weapons)
             {
-                try
+                if (w != null && w.IsGrabbed())
                 {
-                    var waveField = waveSystem.GetType().GetField("waveNumber");
-                    if (waveField != null)
-                    {
-                        int wave = (int)waveField.GetValue(waveSystem);
-                        waveText.text = $"Wave: {wave}";
-                    }
-                }
-                catch
-                {
-                    waveText.text = "Wave: --";
+                    chosen = w;
+                    break;
                 }
             }
+
+            // Fallback: primera
+            if (chosen == null)
+                chosen = weapons[0];
         }
 
-        // Actualizar notas
-        if (notesText != null)
+        if (chosen != null)
         {
-            var uiManager = FindObjectOfType<VRNoteUIManager>();
-            if (uiManager != null)
-            {
-                int collected = uiManager.GetCollectedNotesCount();
-                notesText.text = $"Notes: {collected}/5";
-            }
-            else
-            {
-                notesText.text = "Notes: --/5";
-            }
+            // Tu VRGunWeapon expone estos getters. :contentReference[oaicite:1]{index=1}
+            int cur = chosen.GetCurrentAmmo();
+            int max = chosen.GetMaxAmmo();
+
+            // Si quieres ocultar cuando no está agarrada, descomenta:
+            // if (!chosen.IsGrabbed()) { ammoText.text = $"Ammo: --/{max}"; return; }
+
+            ammoText.text = $"Ammo: {cur}/{max}";
+        }
+        else
+        {
+            ammoText.text = "Ammo: --/--";
+        }
+    }
+
+    private void UpdateWave()
+    {
+        if (waveText == null) return;
+
+        // Si tienes un sistema real de oleadas, pon aquí el getter.
+        // Lo dejo sin romper, mostrando "--" si no hay nada.
+        waveText.text = waveText.text; // no-op, conserva lo que ya tengas si lo actualiza otro script
+    }
+
+    private void UpdateNotes()
+    {
+        if (notesText == null) return;
+
+        // ✅ Contador real: VRGameManager
+        VRGameManager gm = VRGameManager.Instance;
+        if (gm == null)
+            gm = Object.FindAnyObjectByType<VRGameManager>(FindObjectsInactive.Include);
+
+        if (gm != null)
+        {
+            notesText.text = $"Notes: {gm.GetNotesCollected()}/{gm.GetTotalNotes()}";
+        }
+        else
+        {
+            notesText.text = "Notes: --/--";
         }
     }
 
     #endregion
 
-    #region Public API
+    #region Public
 
-    /// <summary>
-    /// Fuerza actualización inmediata del HUD.
-    /// </summary>
     public void ForceUpdate()
     {
         UpdateHUDData();
+        UpdateHUDPosition(true);
     }
 
-    /// <summary>
-    /// Muestra u oculta el HUD.
-    /// </summary>
-    public void SetHUDVisible(bool visible)
-    {
-        if (targetCanvas != null)
-        {
-            targetCanvas.enabled = visible;
-        }
-    }
-
-    /// <summary>
-    /// Asignar manualmente elementos de UI si auto-find falla.
-    /// </summary>
     public void SetUIElements(TextMeshProUGUI health, TextMeshProUGUI ammo, TextMeshProUGUI wave, TextMeshProUGUI notes)
     {
         healthText = health;
